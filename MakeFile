@@ -1,0 +1,49 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -g
+
+# Source directories
+HASHMAP_DIR = hashmap
+QUEUE_DIR   = queue
+TREE_DIR    = tree
+TEST_DIR    = Testing
+
+# Source files
+HASHMAP_SRC = $(wildcard $(HASHMAP_DIR)/*.c)
+QUEUE_SRC   = $(wildcard $(QUEUE_DIR)/*.c)
+TREE_SRC    = $(wildcard $(TREE_DIR)/*.c)
+
+# Test files
+TEST_HASHMAP = $(TEST_DIR)/test_hashmap.c
+TEST_QUEUE   = $(TEST_DIR)/test_queue.c
+TEST_TREE    = $(TEST_DIR)/test_tree.c
+
+# Executables
+BIN_DIR = bin
+HASHMAP_EXE = $(BIN_DIR)/test_hashmap
+QUEUE_EXE   = $(BIN_DIR)/test_queue
+TREE_EXE    = $(BIN_DIR)/test_tree
+
+# Default target
+all: $(BIN_DIR) $(HASHMAP_EXE) $(QUEUE_EXE) $(TREE_EXE)
+
+# Create bin directory
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+# Build hashmap test
+$(HASHMAP_EXE): $(HASHMAP_SRC) $(TEST_HASHMAP)
+	$(CC) $(CFLAGS) -I$(HASHMAP_DIR) $^ -o $@
+
+# Build queue test
+$(QUEUE_EXE): $(QUEUE_SRC) $(TEST_QUEUE)
+	$(CC) $(CFLAGS) -I$(QUEUE_DIR) $^ -o $@
+
+# Build tree test
+$(TREE_EXE): $(TREE_SRC) $(TEST_TREE)
+	$(CC) $(CFLAGS) -I$(TREE_DIR) $^ -o $@
+
+# Clean
+clean:
+	rm -rf $(BIN_DIR)
+
+.PHONY: all clean
