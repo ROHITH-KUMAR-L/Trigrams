@@ -1,0 +1,40 @@
+.prediction-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.prediction-item:last-child {
+    border-bottom: none;
+}
+
+.prediction-item:hover,
+.prediction-item.selected {
+    background: linear-gradient(90deg, #f8f9ff 0%, #ffffff 100%);
+}
+
+.prediction-word {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.prediction-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.prediction-prob {
+    font-weight: 600;
+    color: #4285f4;
+}
+
+.prediction-count {
+    color: #999;
+}

@@ -1,0 +1,42 @@
+import axios from 'axios';
+
+const API_BASE_URL = 'http://127.0.0.1:8080';
+
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+export const getPredictions = async (word1, word2) => {
+    try {
+        const response = await api.post('/predict', { word1, word2 });
+        return response.data.predictions || [];
+    } catch (error) {
+        console.error('API Error:', error);
+        return [];
+    }
+};
+
+export const getStats = async () => {
+    try {
+        const response = await api.get('/stats');
+        return response.data;
+    } catch (error) {
+        console.error('API Error:', error);
+        return null;
+    }
+};
+
+export const checkHealth = async () => {
+    try {
+        const response = await api.get('/health');
+        return response.data;
+    } catch (error) {
+        console.error('API Error:', error);
+        return null;
+    }
+};
+
+export default api;

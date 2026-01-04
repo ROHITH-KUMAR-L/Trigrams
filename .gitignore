@@ -1,0 +1,41 @@
+# Prerequisites
+node_modules/
+.npm/
+
+# Build artifacts
+obj/
+bin/
+*.o
+*.exe
+*.out
+*.so
+*.a
+*.dll
+
+# Application binaries
+trigram_api/trigram_api
+trigram_llm/trigram_llm
+trigram_llm/huge_data.txt
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+dist/
+build/
+.cache/
