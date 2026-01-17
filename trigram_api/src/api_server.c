@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <microhttpd.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include "api_server.h"
 #include "tree.h"
 
@@ -248,9 +251,18 @@ int start_api_server(const char *model_path) {
     printf("  GET  /health  - Health check\n");
     printf("  GET  /stats   - Model statistics\n");
     printf("  POST /predict - Get predictions\n");
-    printf("\nPress Enter to stop server...\n");
     
+#ifdef _WIN32
+    printf("\nPress Enter to stop server...\n");
     getchar();
+#else
+    printf("\nServer running... (Use Ctrl+C or kill to stop)\n");
+    // On Linux, wait indefinitely if non-interactive or backgrounded
+    // A more robust way would be signal handling, but this prevents EOF exit
+    while (1) {
+        pause(); // Wait for any signal (like SIGINT)
+    }
+#endif
     
     return 0;
 }

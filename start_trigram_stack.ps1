@@ -56,7 +56,7 @@ $make = Get-MakeCommand
 
 # ------------------ BUILD & TRAIN LLM ------------------
 $llmDir = Join-Path $repoRoot 'trigram_llm'
-$llmExeNames = @('trigram_llm')
+$llmExeNames = if ($IsWindows) { @('trigram_llm.exe', 'trigram_llm') } else { @('trigram_llm') }
 
 Push-Location $llmDir
 try {
@@ -65,12 +65,12 @@ try {
         Invoke-Step 'Building trigram_llm' { & $make }
         $llmExePath = Resolve-Executable $llmDir $llmExeNames
         if (-not $llmExePath) {
-            throw 'trigram_llm executable not found.'
+            throw 'trigram_llm executable not found after build.'
         }
     }
 
     if (-not $SkipTrain) {
-        $modelPath = Join-Path $llmDir 'output\model.bin'
+        $modelPath = Join-Path $llmDir 'output/model.bin'
         if (-not (Test-Path $modelPath)) {
             New-Item -ItemType Directory -Force -Path (Split-Path $modelPath) | Out-Null
             Invoke-Step 'Training trigram language model' { & $llmExePath --train }
@@ -86,16 +86,24 @@ finally {
 
 # ------------------ BUILD API SERVER ------------------
 $apiDir = Join-Path $repoRoot 'trigram_api'
-$apiExeNames = @('trigram_api')
+$apiExeNames = if ($IsWindows) { @('trigram_api.exe', 'trigram_api') } else { @('trigram_api') }
 
 Push-Location $apiDir
 try {
+    # Check for libmicrohttpd on Linux
+    if (-not $IsWindows) {
+        if (-not (Get-Command 'pkg-config' -ErrorAction SilentlyContinue) -or `
+            -not (pkg-config --exists libmicrohttpd 2>$null)) {
+            Write-Host "Warning: libmicrohttpd-dev might be missing. If build fails, run: sudo apt install libmicrohttpd-dev" -ForegroundColor Yellow
+        }
+    }
+
     $apiExePath = Resolve-Executable $apiDir $apiExeNames
     if (-not $apiExePath) {
         Invoke-Step 'Building trigram_api' { & $make }
         $apiExePath = Resolve-Executable $apiDir $apiExeNames
         if (-not $apiExePath) {
-            throw 'trigram_api executable not found.'
+            throw 'trigram_api executable not found after build.'
         }
     }
 }
@@ -109,39 +117,42 @@ $frontendDir = Join-Path $repoRoot 'trigram_frontend_api'
 if (-not $SkipFrontendInstall) {
     if (-not (Test-Path (Join-Path $frontendDir 'node_modules'))) {
         Invoke-Step 'Installing frontend dependencies' {
-            npm install --prefix $frontendDir
+            $npm = if ($IsWindows) { 'npm.cmd' } else { 'npm' }
+            & $npm install --prefix $frontendDir
         }
     }
 }
 
-# ------------------ START BACKEND ------------------
-Write-Host 'Starting backend server...' -ForegroundColor Green
+# ------------------ START SERVICES ------------------
+Write-Host 'Starting services...' -ForegroundColor Green
 
-$backendCommand = {
-    Set-Location -LiteralPath $using:apiDir
-    & $using:apiExePath
+if ($IsWindows) {
+    # Launch in separate PowerShell windows
+    $backendProcess = Start-Process powershell.exe -ArgumentList '-NoExit', '-Command', "cd '$apiDir'; & '$apiExePath'" -PassThru
+    $frontendProcess = Start-Process powershell.exe -ArgumentList '-NoExit', '-Command', "cd '$frontendDir'; npm run dev" -PassThru
+    
+    Write-Host "`nAll services launched successfully (Windows):" -ForegroundColor Green
+    Write-Host ("  Backend  (PID {0}) → http://localhost:8080" -f $backendProcess.Id)
+    Write-Host ("  Frontend (PID {0}) → http://localhost:3000" -f $frontendProcess.Id)
 }
-
-$backendProcess = Start-Process `
-    -FilePath powershell.exe `
-    -ArgumentList '-NoExit', '-Command', $backendCommand `
-    -PassThru
-
-# ------------------ START FRONTEND ------------------
-Write-Host 'Starting frontend dev server...' -ForegroundColor Green
-
-$frontendCommand = {
-    Set-Location -LiteralPath $using:frontendDir
-    npm run dev
+else {
+    # On Linux/WSL, we'll run them in the background and redirect output to logs
+    # Alternatively, users could use tmux/screen, but for this script we'll use backgrounding.
+    Write-Host "Running on Linux/WSL. Services will run in background." -ForegroundColor Yellow
+    
+    $backendLog = Join-Path $apiDir "backend.log"
+    $frontendLog = Join-Path $frontendDir "frontend.log"
+    
+    # Start Backend
+    Write-Host "Starting Backend (Logging to $backendLog)..."
+    Start-Process -FilePath "nohup" -ArgumentList "'$apiExePath' > '$backendLog' 2>&1 &" -WorkingDirectory $apiDir
+    
+    # Start Frontend
+    Write-Host "Starting Frontend (Logging to $frontendLog)..."
+    Start-Process -FilePath "nohup" -ArgumentList "npm run dev > '$frontendLog' 2>&1 &" -WorkingDirectory $frontendDir
+    
+    Write-Host "`nServices started in background." -ForegroundColor Green
+    Write-Host "  Backend  → http://localhost:8080 (Log: $backendLog)"
+    Write-Host "  Frontend → http://localhost:3000 (Log: $frontendLog)"
+    Write-Host "`nTo stop them, use: pkill trigram_api; pkill node"
 }
-
-$frontendProcess = Start-Process `
-    -FilePath powershell.exe `
-    -ArgumentList '-NoExit', '-Command', $frontendCommand `
-    -PassThru
-
-# ------------------ SUMMARY ------------------
-Write-Host "`nAll services launched successfully:" -ForegroundColor Green
-Write-Host ("  Backend  (PID {0}) → http://localhost:8080" -f $backendProcess.Id)
-Write-Host ("  Frontend (PID {0}) → http://localhost:3000" -f $frontendProcess.Id)
-Write-Host "`nUse Ctrl+C in each window to stop services."
