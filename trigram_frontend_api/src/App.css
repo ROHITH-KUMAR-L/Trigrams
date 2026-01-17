@@ -1,43 +1,62 @@
 .app {
+    text-align: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     flex-direction: column;
-    font-family: 'Inter', sans-serif;
 }
 
 .app-header {
-    text-align: center;
-    padding: 60px 20px 40px;
+    background-color: #646cff;
+    padding: 2rem 0;
     color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .app-title {
-    font-size: 42px;
+    margin: 0;
+    font-size: 2.5rem;
     font-weight: 700;
-    margin: 0 0 12px 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-subtitle {
-    font-size: 16px;
+    margin: 0.5rem 0 0;
     font-weight: 300;
-    margin: 0;
     opacity: 0.9;
 }
 
 .app-main {
     flex: 1;
-    padding: 40px 20px;
-    background: white;
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .app-footer {
-    text-align: center;
-    padding: 20px;
-    color: white;
-    font-size: 13px;
-    opacity: 0.8;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    color: #666;
+    font-size: 0.9rem;
+    border-top: 1px solid #eee;
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
 }
