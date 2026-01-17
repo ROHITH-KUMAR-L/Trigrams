@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <microhttpd.h>
+#include <signal.h>
+#include <unistd.h>
 #include "api_server.h"
 #include "tree.h"
 
@@ -223,6 +225,14 @@ static enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *co
     }
 }
 
+// Signal handler flag
+volatile sig_atomic_t g_running = 1;
+
+void handle_signal(int sig) {
+    (void)sig;
+    g_running = 0;
+}
+
 // Start API server
 int start_api_server(const char *model_path) {
     printf("Loading model from %s...\n", model_path);
@@ -248,9 +258,19 @@ int start_api_server(const char *model_path) {
     printf("  GET  /health  - Health check\n");
     printf("  GET  /stats   - Model statistics\n");
     printf("  POST /predict - Get predictions\n");
-    printf("\nPress Enter to stop server...\n");
+    printf("\nServer running. Send SIGINT (Ctrl+C) or SIGTERM to stop.\n");
+
+    // Setup signal handling
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_signal;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
     
-    getchar();
+    // Wait for signal
+    while(g_running) {
+        sleep(1);
+    }
     
     return 0;
 }

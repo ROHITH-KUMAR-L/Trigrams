@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { usePredictions } from '../hooks/usePredictions';
+
 import PredictionDropdown from './PredictionDropdown';
 import './SearchBar.css';
 
-export default function SearchBar() {
-    const [text, setText] = useState('');
+export default function SearchBar({ text, setText, predictions, loading }) {
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [showDropdown, setShowDropdown] = useState(false);
     const inputRef = useRef(null);
-    const { predictions, loading } = usePredictions(text);
 
     useEffect(() => {
         setShowDropdown(predictions.length > 0 || loading);
