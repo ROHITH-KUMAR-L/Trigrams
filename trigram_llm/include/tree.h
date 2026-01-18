@@ -28,7 +28,7 @@ typedef struct {
 } PredictionResult;
 
 char* lm_predict_next_word(LanguageModel *model, const char *w1, const char *w2, float *probability);
-PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const char *w2, int n, int *result_count);
+PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const char *w2, int n, int *result_count, float temperature);
 void free_prediction_results(PredictionResult *results, int count);
 void lm_print_statistics(LanguageModel *model);
 void lm_free(LanguageModel *model);

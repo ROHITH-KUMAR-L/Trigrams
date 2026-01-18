@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getPredictions } from '../services/api';
 import { useDebounce } from './useDebounce';
 
-export function usePredictions(text) {
+export function usePredictions(text, temperature = 1.0) {
     const [predictions, setPredictions] = useState([]);
     const [loading, setLoading] = useState(false);
     const debouncedText = useDebounce(text, 300);
@@ -21,13 +21,13 @@ export function usePredictions(text) {
             const word2 = words[words.length - 1].toLowerCase();
 
             setLoading(true);
-            const results = await getPredictions(word1, word2);
+            const results = await getPredictions(word1, word2, temperature);
             setPredictions(results);
             setLoading(false);
         };
 
         fetchPredictions();
-    }, [debouncedText]);
+    }, [debouncedText, temperature]);
 
     return { predictions, loading };
 }

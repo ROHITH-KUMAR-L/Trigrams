@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../include/tree.h"
+#include <math.h>
 
 #define INITIAL_CAPACITY 10
 
@@ -159,7 +160,7 @@ static int compare_predictions(const void *a, const void *b) {
 }
 
 // Predict top N next words given two words
-PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const char *w2, int n, int *result_count) {
+PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const char *w2, int n, int *result_count, float temperature) {
     *result_count = 0;
     
     if (!model || !w1 || !w2) return NULL;
@@ -186,14 +187,53 @@ PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const c
     // Copy all children to temporary array for sorting
     PredictionResult *all_predictions = (PredictionResult*)malloc(sizeof(PredictionResult) * level2->num_children);
     
-    for (int i = 0; i < level2->num_children; i++) {
-        all_predictions[i].word = level2->children[i]->word;
-        all_predictions[i].count = level2->children[i]->count;
-        all_predictions[i].probability = (float)level2->children[i]->count / total_count;
+    // Temperature scaling
+    // If temp is near 0, just pick max by setting extreme weights (or handle explicitly)
+    // Here we handle it by counts if temp == 0, else probabilities
+    
+    if (temperature > 0.001f) {
+        float sum_exp = 0.0f;
+        
+        // First pass: Calculate scaled scores and sum
+        for (int i = 0; i < level2->num_children; i++) {
+            all_predictions[i].word = level2->children[i]->word;
+            all_predictions[i].count = level2->children[i]->count;
+            
+            // Score = count^(1/T)
+            // To avoid overflow with large counts, we use log
+            // log(score) = (1/T) * log(count)
+            // score = exp((1/T) * log(count))
+            // But implementing straightforward power is simpler for reasonable counts
+            all_predictions[i].probability = pow((float)level2->children[i]->count, 1.0f / temperature);
+            sum_exp += all_predictions[i].probability;
+        }
+        
+        // Second pass: Normalize
+        for (int i = 0; i < level2->num_children; i++) {
+            all_predictions[i].probability /= sum_exp;
+        }
+    } else {
+        // Deterministic (Temperature ~ 0) - just use raw probabilities/counts
+       for (int i = 0; i < level2->num_children; i++) {
+            all_predictions[i].word = level2->children[i]->word;
+            all_predictions[i].count = level2->children[i]->count;
+            all_predictions[i].probability = (float)level2->children[i]->count / total_count;
+        } 
     }
     
-    // Sort by count (descending)
-    qsort(all_predictions, level2->num_children, sizeof(PredictionResult), compare_predictions);
+    // Sort by probability (which is derived from count or adj count)
+    // Reuse compare_predictions but we need to ensure it uses probability now for temp > 0?
+    // Actually compare_predictions uses .count currently. We need a probability comparator.
+    
+    for (int i = 0; i < level2->num_children; i++) {
+        for (int j = i + 1; j < level2->num_children; j++) {
+            if (all_predictions[j].probability > all_predictions[i].probability) {
+                PredictionResult temp = all_predictions[i];
+                all_predictions[i] = all_predictions[j];
+                all_predictions[j] = temp;
+            }
+        }
+    }
     
     // Copy top N results
     for (int i = 0; i < num_results; i++) {

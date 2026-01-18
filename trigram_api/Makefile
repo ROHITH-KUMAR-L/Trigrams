@@ -1,7 +1,7 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -Wall -Wextra -I../trigram_llm/include -Iinclude -g
-LDFLAGS = -lmicrohttpd
+LDFLAGS = -lmicrohttpd -lm
 
 # Directories
 SRC_DIR = src

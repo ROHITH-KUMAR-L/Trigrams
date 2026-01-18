@@ -114,10 +114,18 @@ int handle_predict(struct MHD_Connection *connection, const char *upload_data, s
     if (strlen(word1) == 0 || strlen(word2) == 0) {
         return send_json_response(connection, "{\"error\":\"Missing word1 or word2\"}", 400);
     }
+
+    // Parse temperature (default 1.0)
+    float temperature = 1.0f;
+    const char *temp_start = strstr(upload_data, "\"temperature\":");
+    if (temp_start) {
+        temp_start += 14; // Skip "temperature":
+        temperature = strtof(temp_start, NULL);
+    }
     
     // Get predictions
     int result_count;
-    PredictionResult *predictions = lm_predict_top_n(g_model, word1, word2, 5, &result_count);
+    PredictionResult *predictions = lm_predict_top_n(g_model, word1, word2, 5, &result_count, temperature);
     
     if (!predictions || result_count == 0) {
         return send_json_response(connection, "{\"predictions\":[]}", 200);

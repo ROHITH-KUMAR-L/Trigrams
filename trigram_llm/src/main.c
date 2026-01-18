@@ -50,7 +50,7 @@ void interactive_prediction(LanguageModel *model) {
         if (strcmp(word2, "quit") == 0) break;
         
         int result_count;
-        PredictionResult *predictions = lm_predict_top_n(model, word1, word2, 5, &result_count);
+        PredictionResult *predictions = lm_predict_top_n(model, word1, word2, 5, &result_count, 1.0f);
         
         if (predictions && result_count > 0) {
             printf("\nTop %d predictions for \"%s %s\":\n", result_count, word1, word2);

@@ -9,9 +9,9 @@ const api = axios.create({
     },
 });
 
-export const getPredictions = async (word1, word2) => {
+export const getPredictions = async (word1, word2, temperature = 1.0) => {
     try {
-        const response = await api.post('/predict', { word1, word2 });
+        const response = await api.post('/predict', { word1, word2, temperature });
         return response.data.predictions || [];
     } catch (error) {
         console.error('API Error:', error);
