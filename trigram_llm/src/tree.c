@@ -151,12 +151,21 @@ char* lm_predict_next_word(LanguageModel *model, const char *w1, const char *w2,
     return best_child ? best_child->word : NULL;
 }
 
-// Comparison function for sorting predictions
+// Comparison function for sorting predictions by count
 static int compare_predictions(const void *a, const void *b) {
     PredictionResult *pred_a = (PredictionResult*)a;
     PredictionResult *pred_b = (PredictionResult*)b;
     // Sort by count descending
     return pred_b->count - pred_a->count;
+}
+
+// Comparison function for sorting predictions by probability
+static int compare_predictions_prob(const void *a, const void *b) {
+    PredictionResult *pred_a = (PredictionResult*)a;
+    PredictionResult *pred_b = (PredictionResult*)b;
+    if (pred_b->probability > pred_a->probability) return 1;
+    if (pred_b->probability < pred_a->probability) return -1;
+    return 0;
 }
 
 // Predict top N next words given two words
@@ -172,78 +181,172 @@ PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const c
     TreeNode *level2 = find_child(level1, w2);
     if (!level2 || level2->num_children == 0) return NULL;
     
-    // Calculate total count
-    int total_count = 0;
-    for (int i = 0; i < level2->num_children; i++) {
-        total_count += level2->children[i]->count;
+    int num_candidates = level2->num_children;
+    
+    // Allocate temporary array for candidates
+    PredictionResult *candidates = (PredictionResult*)malloc(sizeof(PredictionResult) * num_candidates);
+    if (!candidates) return NULL;
+
+    // --- Step 1: Calculate Scaled Probabilities ---
+    float sum_exp = 0.0f;
+    
+    // If temperature is extremely low, treat as deterministic (T -> 0)
+    // We'll just sort by count and take top N later
+    int deterministic = (temperature < 0.1f);
+    
+    for (int i = 0; i < num_candidates; i++) {
+        candidates[i].word = level2->children[i]->word;
+        candidates[i].count = level2->children[i]->count;
+        
+        if (deterministic) {
+            // Just use raw count as score
+            candidates[i].probability = (float)candidates[i].count; 
+        } else {
+            // Scale: count^(1/T)
+            candidates[i].probability = pow((float)candidates[i].count, 1.0f / temperature);
+        }
+        sum_exp += candidates[i].probability;
     }
     
-    // Allocate results array
-    int num_results = (n < level2->num_children) ? n : level2->num_children;
-    PredictionResult *results = (PredictionResult*)malloc(sizeof(PredictionResult) * num_results);
-    
-    if (!results) return NULL;
-    
-    // Copy all children to temporary array for sorting
-    PredictionResult *all_predictions = (PredictionResult*)malloc(sizeof(PredictionResult) * level2->num_children);
-    
-    // Temperature scaling
-    // If temp is near 0, just pick max by setting extreme weights (or handle explicitly)
-    // Here we handle it by counts if temp == 0, else probabilities
-    
-    if (temperature > 0.001f) {
-        float sum_exp = 0.0f;
-        
-        // First pass: Calculate scaled scores and sum
-        for (int i = 0; i < level2->num_children; i++) {
-            all_predictions[i].word = level2->children[i]->word;
-            all_predictions[i].count = level2->children[i]->count;
-            
-            // Score = count^(1/T)
-            // To avoid overflow with large counts, we use log
-            // log(score) = (1/T) * log(count)
-            // score = exp((1/T) * log(count))
-            // But implementing straightforward power is simpler for reasonable counts
-            all_predictions[i].probability = pow((float)level2->children[i]->count, 1.0f / temperature);
-            sum_exp += all_predictions[i].probability;
+    // Normalize if not deterministic (or even if deterministic, to get pseudo-probs)
+    // For deterministic, we just want to sort, so normalization doesn't change order.
+    // For sampling, we need valid probabilities summing to 1.
+    if (!deterministic && sum_exp > 0) {
+        for (int i = 0; i < num_candidates; i++) {
+            candidates[i].probability /= sum_exp;
         }
-        
-        // Second pass: Normalize
-        for (int i = 0; i < level2->num_children; i++) {
-            all_predictions[i].probability /= sum_exp;
+    } else if (deterministic) {
+        // Normalize linear counts just for display
+        float total_count = 0;
+        for (int i=0; i<num_candidates; i++) total_count += candidates[i].count;
+        for (int i=0; i<num_candidates; i++) candidates[i].probability = (float)candidates[i].count / total_count;
+    }
+
+    // --- Step 2: Sort Candidates (Desc by Probability) ---
+    // We need this for Top-P pruning AND deterministic selection
+    qsort(candidates, num_candidates, sizeof(PredictionResult), compare_predictions_prob);
+    
+    // --- Step 3: Selection Strategy ---
+    
+    int final_count = 0;
+    PredictionResult *results = (PredictionResult*)malloc(sizeof(PredictionResult) * n);
+    
+    if (deterministic) {
+        // deterministic: just take Top N
+        final_count = (n < num_candidates) ? n : num_candidates;
+        for (int i = 0; i < final_count; i++) {
+            results[i].word = strdup(candidates[i].word);
+            results[i].count = candidates[i].count;
+            results[i].probability = candidates[i].probability;
         }
     } else {
-        // Deterministic (Temperature ~ 0) - just use raw probabilities/counts
-       for (int i = 0; i < level2->num_children; i++) {
-            all_predictions[i].word = level2->children[i]->word;
-            all_predictions[i].count = level2->children[i]->count;
-            all_predictions[i].probability = (float)level2->children[i]->count / total_count;
-        } 
-    }
-    
-    // Sort by probability (which is derived from count or adj count)
-    // Reuse compare_predictions but we need to ensure it uses probability now for temp > 0?
-    // Actually compare_predictions uses .count currently. We need a probability comparator.
-    
-    for (int i = 0; i < level2->num_children; i++) {
-        for (int j = i + 1; j < level2->num_children; j++) {
-            if (all_predictions[j].probability > all_predictions[i].probability) {
-                PredictionResult temp = all_predictions[i];
-                all_predictions[i] = all_predictions[j];
-                all_predictions[j] = temp;
-            }
+        // --- SAMPLING with Top-P Pruning ---
+        
+        // 3a. Top-P Pruning (Nucleus Sampling)
+        // Keep candidates until cumulative prob >= 0.9
+        float cumulative = 0.0f;
+        int cutoff_idx = 0;
+        float p_threshold = 0.9f;
+        
+        for (int i = 0; i < num_candidates; i++) {
+            cumulative += candidates[i].probability;
+            cutoff_idx = i;
+            if (cumulative >= p_threshold) break;
         }
+        int pool_size = cutoff_idx + 1; // Number of candidates in the pool
+        
+        // Re-normalize the pool probabilities
+        float pool_sum = 0.0f;
+        for (int i = 0; i < pool_size; i++) pool_sum += candidates[i].probability;
+        for (int i = 0; i < pool_size; i++) candidates[i].probability /= pool_sum;
+        
+        // 3b. Independent Weighted Sampling
+        // We want 'n' suggestions. We will sample N times independently.
+        // To avoid duplicates in the output list, we track what we've added.
+        
+        // Simple O(N*Pool) approach to ensure uniqueness or just retry
+        // Since N is small (5), linear scan is fine.
+        
+        int *selected_indices = (int*)calloc(n, sizeof(int)); // indices from 'candidates' array
+        for(int k=0; k<n; k++) selected_indices[k] = -1;
+        
+        for (int i = 0; i < n; i++) {
+            // Sampling loop with retries for uniqueness
+            int picked_idx = -1;
+            int retries = 0;
+            const int MAX_RETRIES = 20;
+            
+            while (retries < MAX_RETRIES) {
+                // Sample one item from pool [0..pool_size-1]
+                float r = (float)rand() / (float)RAND_MAX;
+                float acc = 0.0f;
+                picked_idx = pool_size - 1; // Default to last
+                
+                for (int j = 0; j < pool_size; j++) {
+                    acc += candidates[j].probability;
+                    if (r <= acc) {
+                        picked_idx = j;
+                        break;
+                    }
+                }
+                
+                // Check if already selected
+                int exists = 0;
+                for (int k = 0; k < i; k++) {
+                    if (selected_indices[k] == picked_idx) {
+                        exists = 1;
+                        break;
+                    }
+                }
+                
+                if (!exists) break; // Found unique
+                retries++;
+            }
+            
+            // If we failed to find unique after retries, just take the next available greedy one
+            if (retries >= MAX_RETRIES) {
+                // Find first unused
+                for (int j = 0; j < pool_size; j++) {
+                    int exists = 0;
+                    for (int k = 0; k < i; k++) {
+                         if (selected_indices[k] == j) { exists = 1; break; }
+                    }
+                    if (!exists) { picked_idx = j; break; }
+                }
+            }
+            
+            selected_indices[i] = picked_idx;
+        }
+        
+        // Copy selected results
+        // Also re-sort them by their prob so the user sees them best-to-worst (optional but requested)
+        // Or keep them in sampling order? Requirement said: "Sort the final selected words by their scaled probability"
+        
+        // Let's first collect them
+        final_count = 0;
+        for(int i=0; i<n; i++) {
+             int idx = selected_indices[i];
+             if (idx == -1) continue; // Should not happen unless pool < n
+             
+             results[final_count].word = strdup(candidates[idx].word);
+             results[final_count].count = candidates[idx].count;
+             
+             // Restore the scaled probability (relative to the full set, or pruned set?)
+             // Usually users want to see the probability relative to the prediction context.
+             // We'll use the value from 'candidates' which was renormalized to pool_sum=1.0.
+             // That represents "probability among these top P candidates".
+             results[final_count].probability = candidates[idx].probability;
+             final_count++;
+        }
+        
+        free(selected_indices);
+        
+        // Sort final results by probability descending
+        qsort(results, final_count, sizeof(PredictionResult), compare_predictions_prob);
     }
     
-    // Copy top N results
-    for (int i = 0; i < num_results; i++) {
-        results[i].word = strdup(all_predictions[i].word);
-        results[i].count = all_predictions[i].count;
-        results[i].probability = all_predictions[i].probability;
-    }
-    
-    free(all_predictions);
-    *result_count = num_results;
+    free(candidates);
+    *result_count = final_count;
     return results;
 }
 

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include "api_server.h"
 #include "tree.h"
+#include <time.h>
 
 // Global model instance
 LanguageModel *g_model = NULL;
@@ -300,6 +301,7 @@ void stop_api_server() {
 
 // Main function
 int main(int argc, char *argv[]) {
+    srand(time(NULL));
     const char *model_path = "../trigram_llm/output/model.bin";
     
     if (argc > 1) {
