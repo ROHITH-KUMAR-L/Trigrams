@@ -19,6 +19,19 @@ export const getPredictions = async (word1, word2, temperature = 1.0) => {
     }
 };
 
+// Code API (Python-trained model on port 8081)
+const CODE_API_URL = 'http://127.0.0.1:8081';
+
+export const getCodePredictions = async (word1, word2, temperature = 1.0) => {
+    try {
+        const response = await axios.post(`${CODE_API_URL}/predict`, { word1, word2, temperature });
+        return response.data.predictions || [];
+    } catch (error) {
+        console.error('Code API Error:', error);
+        return [];
+    }
+};
+
 export const getStats = async () => {
     try {
         const response = await api.get('/stats');

@@ -39,3 +39,10 @@ yarn-error.log*
 dist/
 build/
 .cache/
+# Ignore model outputs
+trigram_llm/output_py/model.bin
+trigram_llm/output_py/result.txt
+
+# (optional) ignore all binary / output files
+*.bin
+*.txt

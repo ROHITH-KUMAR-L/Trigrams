@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getPredictions } from '../services/api';
+import { getCodePredictions } from '../services/api';
 
 /**
  * Custom hook for code predictions using trigram model
@@ -31,7 +31,7 @@ export function useCodePredictions(currentLine, temperature = 1.0) {
 
         setLoading(true);
         try {
-            const results = await getPredictions(word1, word2, temperature);
+            const results = await getCodePredictions(word1, word2, temperature);
             setPredictions(results);
         } catch (error) {
             console.error('Prediction error:', error);

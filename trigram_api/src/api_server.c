@@ -242,8 +242,11 @@ void handle_signal(int sig) {
     g_running = 0;
 }
 
-// Start API server
-int start_api_server(const char *model_path) {
+// Global port variable (can be overridden via command line)
+int g_api_port = API_PORT;
+
+// Start API server (modified to use global port)
+int start_api_server_on_port(const char *model_path, int port) {
     printf("Loading model from %s...\n", model_path);
     
     g_model = lm_load_from_file(model_path);
@@ -253,9 +256,9 @@ int start_api_server(const char *model_path) {
     }
     
     printf("Model loaded successfully!\n");
-    printf("Starting API server on port %d...\n", API_PORT);
+    printf("Starting API server on port %d...\n", port);
     
-    daemon_handle = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, API_PORT, NULL, NULL,
+    daemon_handle = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, port, NULL, NULL,
                                     &answer_to_connection, NULL, MHD_OPTION_END);
     
     if (daemon_handle == NULL) {
@@ -263,7 +266,7 @@ int start_api_server(const char *model_path) {
         return 1;
     }
     
-    printf("✓ API server running at http://localhost:%d\n", API_PORT);
+    printf("✓ API server running at http://localhost:%d\n", port);
     printf("  GET  /health  - Health check\n");
     printf("  GET  /stats   - Model statistics\n");
     printf("  POST /predict - Get predictions\n");
@@ -282,6 +285,11 @@ int start_api_server(const char *model_path) {
     }
     
     return 0;
+}
+
+// Original function for backward compatibility
+int start_api_server(const char *model_path) {
+    return start_api_server_on_port(model_path, API_PORT);
 }
 
 // Stop API server
@@ -303,13 +311,23 @@ void stop_api_server() {
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     const char *model_path = "../trigram_llm/output/model.bin";
+    int port = API_PORT;
     
-    if (argc > 1) {
-        model_path = argv[1];
+    // Parse arguments
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-p") == 0 && i + 1 < argc) {
+            port = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-m") == 0 && i + 1 < argc) {
+            model_path = argv[++i];
+        } else if (argv[i][0] != '-') {
+            // Legacy: first non-flag argument is model path
+            model_path = argv[i];
+        }
     }
     
-    int ret = start_api_server(model_path);
+    int ret = start_api_server_on_port(model_path, port);
     stop_api_server();
     
     return ret;
 }
+

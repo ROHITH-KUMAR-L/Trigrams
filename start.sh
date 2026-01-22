@@ -59,26 +59,42 @@ fi
 # 6. Start services
 print_step "Starting services..."
 
-trap 'kill $(jobs -p)' SIGINT SIGTERM EXIT # Kill background jobs on exit
+trap 'kill $(jobs -p) 2>/dev/null' SIGINT SIGTERM EXIT # Kill background jobs on exit
 
-# Start backend
+# Start English text backend (port 8080)
 cd "$API_DIR"
-echo "Starting backend server (trigram_api)..."
-./trigram_api &
+echo "Starting English text API server (port 8080)..."
+./trigram_api -m ../trigram_llm/output/model.bin -p 8080 &
 BACKEND_PID=$!
 
-# Wait a moment for backend to initialize
+# Start Python code backend (port 8081)
+echo "Starting Python code API server (port 8081)..."
+./trigram_api -m ../trigram_llm/output_py/model.bin -p 8081 &
+CODE_BACKEND_PID=$!
+
+# Wait a moment for backends to initialize
 sleep 2
 
-# Start frontend
+# Start format server
 cd "$FRONTEND_DIR"
+echo "Starting code format server (port 5001)..."
+node format_server.js &
+FORMAT_PID=$!
+
+# Start frontend
 echo "Starting frontend dev server..."
 npm run dev &
 FRONTEND_PID=$!
 
 echo -e "\n\033[0;32mAll services started!\033[0m"
-echo -e "Backend:  http://localhost:8080"
-echo -e "Frontend: http://localhost:3000"
-echo -e "Press Ctrl+C to stop all services.\n"
+echo -e "English Text API: http://localhost:8080"
+echo -e "Python Code API:  http://localhost:8081"
+echo -e "Format Server:    http://localhost:5001"
+echo -e "Frontend:         http://localhost:3000"
+echo -e "\nRoutes:"
+echo -e "  /            - Trigram Language Model (English)"
+echo -e "  /code-editor - Python Code Editor"
+echo -e "\nPress Ctrl+C to stop all services.\n"
 
-wait $BACKEND_PID $FRONTEND_PID
+wait $BACKEND_PID $CODE_BACKEND_PID $FORMAT_PID $FRONTEND_PID
+

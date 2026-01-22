@@ -13,14 +13,20 @@ export default function CodeEditor() {
     const [formatError, setFormatError] = useState(null);
     const editorRef = useRef(null);
     const monacoRef = useRef(null);
+    const predictionsRef = useRef([]); // Store predictions in ref for Monaco access
 
     const { predictions, loading } = useCodePredictions(currentLine, temperature);
+
+    // Keep ref in sync with state
+    useEffect(() => {
+        predictionsRef.current = predictions;
+    }, [predictions]);
 
     const handleEditorDidMount = (editor, monaco) => {
         editorRef.current = editor;
         monacoRef.current = monaco;
 
-        // Register completion provider for trigram predictions
+        // Register completion provider that reads from ref (always up-to-date)
         monaco.languages.registerCompletionItemProvider('python', {
             provideCompletionItems: (model, position) => {
                 const word = model.getWordUntilPosition(position);
@@ -31,18 +37,23 @@ export default function CodeEditor() {
                     endColumn: word.endColumn,
                 };
 
-                const suggestions = predictions.map((pred, index) => ({
+                // Read from ref to get current predictions
+                const currentPredictions = predictionsRef.current;
+
+                const suggestions = currentPredictions.map((pred, index) => ({
                     label: pred.word,
-                    kind: monaco.languages.CompletionItemKind.Text,
-                    detail: `Trigram: ${(pred.probability * 100).toFixed(1)}%`,
-                    insertText: pred.word,
+                    kind: monaco.languages.CompletionItemKind.Keyword,
+                    detail: `${(pred.probability * 100).toFixed(1)}%`,
+                    documentation: `Trigram prediction (count: ${pred.count})`,
+                    insertText: pred.word + ' ',
                     range: range,
                     sortText: String(index).padStart(3, '0'),
+                    preselect: index === 0,
                 }));
 
                 return { suggestions };
             },
-            triggerCharacters: [' ', '.', '(', ','],
+            triggerCharacters: [' '],
         });
 
         // Listen for cursor position changes to track current line
@@ -50,7 +61,24 @@ export default function CodeEditor() {
             const lineContent = editor.getModel().getLineContent(e.position.lineNumber);
             setCurrentLine(lineContent);
         });
+
+        // Also trigger on content change
+        editor.onDidChangeModelContent(() => {
+            const position = editor.getPosition();
+            if (position) {
+                const lineContent = editor.getModel().getLineContent(position.lineNumber);
+                setCurrentLine(lineContent);
+            }
+        });
     };
+
+    // Trigger autocomplete when predictions change
+    useEffect(() => {
+        if (predictions.length > 0 && editorRef.current && monacoRef.current) {
+            // Trigger suggestions widget
+            editorRef.current.trigger('trigram', 'editor.action.triggerSuggest', {});
+        }
+    }, [predictions]);
 
     const handleEditorChange = (value) => {
         setCode(value || '');
@@ -74,7 +102,7 @@ export default function CodeEditor() {
                 setFormatError(result.error);
             }
         } catch (error) {
-            setFormatError('Format server not available. Make sure format_server.js is running.');
+            setFormatError('Format server not available. Run: node format_server.js');
         } finally {
             setIsFormatting(false);
         }
@@ -97,7 +125,7 @@ export default function CodeEditor() {
             <div className="code-editor-header">
                 <Link to="/" className="back-link">← Back to Home</Link>
                 <h1>Python Code Editor</h1>
-                <p>Trigram-powered code completion with auto-formatting</p>
+                <p>Type 2+ words → see predictions → press ↓ to select</p>
             </div>
 
             <div className="code-editor-toolbar">
@@ -155,15 +183,24 @@ export default function CodeEditor() {
                         insertSpaces: true,
                         wordWrap: 'on',
                         suggestOnTriggerCharacters: true,
-                        quickSuggestions: true,
+                        quickSuggestions: {
+                            other: true,
+                            comments: false,
+                            strings: true
+                        },
                         acceptSuggestionOnEnter: 'on',
+                        suggest: {
+                            showWords: true,
+                            showSnippets: true,
+                            preview: true,
+                        },
                     }}
                 />
             </div>
 
             <div className="predictions-panel">
                 <h3>
-                    {loading ? '⏳ Loading predictions...' : '💡 Trigram Predictions'}
+                    {loading ? '⏳ Loading...' : `💡 Predictions (${predictions.length})`}
                 </h3>
                 {predictions.length > 0 ? (
                     <div className="prediction-chips">
@@ -201,9 +238,8 @@ export default function CodeEditor() {
 
             <div className="code-editor-info">
                 <p>
-                    <strong>How it works:</strong> The trigram model predicts the next word based on the previous two words.
-                    Since the model was trained without punctuation, use the <strong>Format Code</strong> button
-                    to add proper Python syntax with Black/autopep8.
+                    <strong>Tip:</strong> After typing 2 words and a space, press <kbd>↓</kbd> to select predictions.
+                    Click "Format Code" to fix indentation with Black.
                 </p>
             </div>
         </div>
