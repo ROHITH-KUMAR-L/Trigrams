@@ -46,3 +46,12 @@ trigram_llm/output_py/result.txt
 # (optional) ignore all binary / output files
 *.bin
 *.txt
+# Outputs / models
+trigram_llm/output/
+trigram_llm/output_py/
+*.bin
+*.txt
+
+# Secrets
+.env
+.env.*
