@@ -39,4 +39,17 @@ export const checkHealth = async () => {
     }
 };
 
+// Format server API (runs on port 5001)
+const FORMAT_API_URL = 'http://127.0.0.1:5001';
+
+export const formatCode = async (code) => {
+    try {
+        const response = await axios.post(`${FORMAT_API_URL}/format`, { code });
+        return response.data;
+    } catch (error) {
+        console.error('Format API Error:', error);
+        throw error;
+    }
+};
+
 export default api;

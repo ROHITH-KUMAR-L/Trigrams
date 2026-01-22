@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import SearchBar from './components/SearchBar';
 import Stats from './components/Stats';
 import DataStructureViz from './components/DataStructureViz';
@@ -13,6 +14,9 @@ function App() {
     return (
         <div className="app">
             <header className="app-header">
+                <div className="header-nav">
+                    <Link to="/code-editor" className="nav-link">🖥️ Code Editor</Link>
+                </div>
                 <h1 className="app-title">Trigram Language Model</h1>
                 <p className="app-subtitle">Real-time next-word predictions by statistical analysis</p>
             </header>

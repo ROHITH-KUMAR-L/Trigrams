@@ -1,0 +1,234 @@
+.code-editor-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.code-editor-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 16px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    transform: translateX(-4px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.code-editor-header h1 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.code-editor-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.code-editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.format-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.format-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.format-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.toolbar-hint {
+    color: #888;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.temperature-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+}
+
+.temperature-control label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.temperature-control input[type="range"] {
+    width: 120px;
+    cursor: pointer;
+}
+
+.temp-label {
+    font-size: 12px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.format-error {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 0;
+    font-size: 14px;
+}
+
+.editor-container {
+    border: 2px solid #1a1a2e;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.predictions-panel {
+    margin-top: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+    border-radius: 12px;
+    border: 1px solid #e0e4ff;
+}
+
+.predictions-panel h3 {
+    margin: 0 0 16px 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.prediction-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.prediction-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.prediction-chip:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.prediction-chip:hover .chip-prob {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.chip-prob {
+    font-size: 11px;
+    padding: 2px 6px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    color: #666;
+    font-weight: 500;
+}
+
+.no-predictions {
+    color: #888;
+    font-style: italic;
+    margin: 0;
+}
+
+.code-editor-info {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.code-editor-info p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.code-editor-info strong {
+    color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .code-editor-toolbar {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .temperature-control {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
