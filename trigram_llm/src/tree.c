@@ -50,6 +50,7 @@ LanguageModel* lm_create() {
     
     model->root = tree_node_create(NULL); // Root has no word
     model->total_trigrams = 0;
+    model->vocabulary_size = 0;
     
     return model;
 }
@@ -168,18 +169,43 @@ static int compare_predictions_prob(const void *a, const void *b) {
     return 0;
 }
 
-// Predict top N next words given two words
+// Predict top N next words given two words (with Laplace smoothing)
 PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const char *w2, int n, int *result_count, float temperature) {
     *result_count = 0;
     
     if (!model || !w1 || !w2) return NULL;
     
+    // Get vocabulary size for smoothing (use minimum of 1 if not set)
+    int V = (model->vocabulary_size > 0) ? model->vocabulary_size : 1;
+    
     // Navigate to level 2
     TreeNode *level1 = find_child(model->root, w1);
-    if (!level1) return NULL;
+    TreeNode *level2 = NULL;
     
-    TreeNode *level2 = find_child(level1, w2);
-    if (!level2 || level2->num_children == 0) return NULL;
+    if (level1) {
+        level2 = find_child(level1, w2);
+    }
+    
+    // If context not found, return top unigrams with uniform smoothed probability (fallback)
+    if (!level2 || level2->num_children == 0) {
+        // Fallback: return most common first words as suggestions with smoothed uniform prob
+        int num_fallback = (n < model->root->num_children) ? n : model->root->num_children;
+        if (num_fallback == 0) return NULL;
+        
+        PredictionResult *results = (PredictionResult*)malloc(sizeof(PredictionResult) * num_fallback);
+        if (!results) return NULL;
+        
+        // Get most common first words as fallback
+        float uniform_prob = 1.0f / V;  // Smoothed probability for unseen context
+        for (int i = 0; i < num_fallback; i++) {
+            results[i].word = strdup(model->root->children[i]->word);
+            results[i].count = 1;  // Smoothed count
+            results[i].probability = uniform_prob;
+        }
+        
+        *result_count = num_fallback;
+        return results;
+    }
     
     int num_candidates = level2->num_children;
     
@@ -408,6 +434,7 @@ int lm_save_to_file(LanguageModel *model, const char *filename) {
     
     // Write header
     fwrite(&model->total_trigrams, sizeof(int), 1, file);
+    fwrite(&model->vocabulary_size, sizeof(int), 1, file);
     int num_first_words = model->root->num_children;
     fwrite(&num_first_words, sizeof(int), 1, file);
     
@@ -459,6 +486,7 @@ LanguageModel* lm_load_from_file(const char *filename) {
     
     // Read header
     fread(&model->total_trigrams, sizeof(int), 1, file);
+    fread(&model->vocabulary_size, sizeof(int), 1, file);
     int num_first_words;
     fread(&num_first_words, sizeof(int), 1, file);
     
@@ -506,4 +534,167 @@ LanguageModel* lm_load_from_file(const char *filename) {
     
     fclose(file);
     return model;
+}
+
+// ============= BEAM SEARCH FOR SENTENCE GENERATION =============
+
+// Internal beam state structure
+typedef struct {
+    char *words[20];  // Max 20 words in sequence
+    int num_words;
+    float log_probability;
+} BeamState;
+
+// Comparison for sorting beams by probability (descending)
+static int compare_beams(const void *a, const void *b) {
+    BeamState *ba = (BeamState*)a;
+    BeamState *bb = (BeamState*)b;
+    if (bb->log_probability > ba->log_probability) return 1;
+    if (bb->log_probability < ba->log_probability) return -1;
+    return 0;
+}
+
+// Deep copy a beam state
+static void copy_beam_state(BeamState *dest, BeamState *src) {
+    dest->num_words = src->num_words;
+    dest->log_probability = src->log_probability;
+    for (int i = 0; i < src->num_words; i++) {
+        dest->words[i] = strdup(src->words[i]);
+    }
+}
+
+// Free beam state words
+static void free_beam_state(BeamState *state) {
+    for (int i = 0; i < state->num_words; i++) {
+        free(state->words[i]);
+        state->words[i] = NULL;
+    }
+    state->num_words = 0;
+}
+
+// Beam search for generating sentence completions
+BeamResult* lm_beam_search(LanguageModel *model, const char *w1, const char *w2, 
+                           int num_words, int beam_width, int *result_count) {
+    *result_count = 0;
+    if (!model || !w1 || !w2 || num_words <= 0 || beam_width <= 0) return NULL;
+    
+    // Limit to reasonable values
+    if (num_words > 10) num_words = 10;
+    if (beam_width > 10) beam_width = 10;
+    
+    // Allocate beam arrays
+    BeamState *current_beams = (BeamState*)calloc(beam_width * 10, sizeof(BeamState));
+    BeamState *next_beams = (BeamState*)calloc(beam_width * 10, sizeof(BeamState));
+    if (!current_beams || !next_beams) {
+        free(current_beams);
+        free(next_beams);
+        return NULL;
+    }
+    
+    // Initialize with starting context
+    current_beams[0].words[0] = strdup(w1);
+    current_beams[0].words[1] = strdup(w2);
+    current_beams[0].num_words = 2;
+    current_beams[0].log_probability = 0.0f;
+    int num_current_beams = 1;
+    
+    // Generate words iteratively
+    for (int step = 0; step < num_words; step++) {
+        int num_next_beams = 0;
+        
+        for (int b = 0; b < num_current_beams; b++) {
+            BeamState *beam = &current_beams[b];
+            
+            // Get last two words as context
+            const char *ctx1 = beam->words[beam->num_words - 2];
+            const char *ctx2 = beam->words[beam->num_words - 1];
+            
+            // Get predictions for this context
+            int pred_count;
+            PredictionResult *preds = lm_predict_top_n(model, ctx1, ctx2, beam_width, &pred_count, 0.0f);
+            
+            if (preds && pred_count > 0) {
+                for (int p = 0; p < pred_count && num_next_beams < beam_width * 5; p++) {
+                    BeamState *new_beam = &next_beams[num_next_beams];
+                    copy_beam_state(new_beam, beam);
+                    
+                    // Add new word
+                    new_beam->words[new_beam->num_words] = strdup(preds[p].word);
+                    new_beam->num_words++;
+                    
+                    // Update log probability (avoid log(0))
+                    float prob = preds[p].probability > 0.0001f ? preds[p].probability : 0.0001f;
+                    new_beam->log_probability += log(prob);
+                    
+                    num_next_beams++;
+                }
+                free_prediction_results(preds, pred_count);
+            }
+        }
+        
+        if (num_next_beams == 0) break;
+        
+        // Sort and keep top beam_width
+        qsort(next_beams, num_next_beams, sizeof(BeamState), compare_beams);
+        
+        // Free old beams and swap
+        for (int i = 0; i < num_current_beams; i++) {
+            free_beam_state(&current_beams[i]);
+        }
+        
+        num_current_beams = (num_next_beams < beam_width) ? num_next_beams : beam_width;
+        for (int i = 0; i < num_current_beams; i++) {
+            copy_beam_state(&current_beams[i], &next_beams[i]);
+        }
+        
+        // Clear next beams
+        for (int i = 0; i < num_next_beams; i++) {
+            free_beam_state(&next_beams[i]);
+        }
+    }
+    
+    // Convert to results
+    BeamResult *results = (BeamResult*)malloc(sizeof(BeamResult) * num_current_beams);
+    if (!results) {
+        for (int i = 0; i < num_current_beams; i++) free_beam_state(&current_beams[i]);
+        free(current_beams);
+        free(next_beams);
+        return NULL;
+    }
+    
+    for (int i = 0; i < num_current_beams; i++) {
+        BeamState *beam = &current_beams[i];
+        
+        // Build sentence string
+        int total_len = 0;
+        for (int w = 0; w < beam->num_words; w++) {
+            total_len += strlen(beam->words[w]) + 1;
+        }
+        
+        results[i].sentence = (char*)malloc(total_len + 1);
+        results[i].sentence[0] = '\0';
+        
+        for (int w = 0; w < beam->num_words; w++) {
+            if (w > 0) strcat(results[i].sentence, " ");
+            strcat(results[i].sentence, beam->words[w]);
+        }
+        
+        results[i].probability = exp(beam->log_probability);
+        free_beam_state(beam);
+    }
+    
+    *result_count = num_current_beams;
+    free(current_beams);
+    free(next_beams);
+    
+    return results;
+}
+
+// Free beam results
+void free_beam_results(BeamResult *results, int count) {
+    if (!results) return;
+    for (int i = 0; i < count; i++) {
+        free(results[i].sentence);
+    }
+    free(results);
 }

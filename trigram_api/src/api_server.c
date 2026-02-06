@@ -153,6 +153,95 @@ int handle_predict(struct MHD_Connection *connection, const char *upload_data, s
     return send_json_response(connection, json, 200);
 }
 
+// Handle /generate endpoint (beam search for sentence completion)
+int handle_generate(struct MHD_Connection *connection, const char *upload_data, size_t upload_data_size) {
+    (void)upload_data_size;
+    
+    if (!g_model) {
+        return send_json_response(connection, "{\"error\":\"Model not loaded\"}", 500);
+    }
+    
+    if (!upload_data || strlen(upload_data) == 0) {
+        return send_json_response(connection, "{\"error\":\"No data received\"}", 400);
+    }
+    
+    // Parse JSON request
+    char word1[100] = {0}, word2[100] = {0};
+    int num_words = 5;
+    int beam_width = 3;
+    
+    // Parse word1 and word2
+    const char *w1_start = strstr(upload_data, "\"word1\":\"");
+    const char *w2_start = strstr(upload_data, "\"word2\":\"");
+    
+    if (w1_start && w2_start) {
+        w1_start += 9;
+        const char *w1_end = strchr(w1_start, '"');
+        if (w1_end && (w1_end - w1_start) < 99) {
+            int len = w1_end - w1_start;
+            strncpy(word1, w1_start, len);
+            word1[len] = '\0';
+        }
+        
+        w2_start += 9;
+        const char *w2_end = strchr(w2_start, '"');
+        if (w2_end && (w2_end - w2_start) < 99) {
+            int len = w2_end - w2_start;
+            strncpy(word2, w2_start, len);
+            word2[len] = '\0';
+        }
+    }
+    
+    // Parse num_words
+    const char *nw_start = strstr(upload_data, "\"num_words\":");
+    if (nw_start) {
+        nw_start += 12;
+        num_words = atoi(nw_start);
+        if (num_words < 1) num_words = 1;
+        if (num_words > 10) num_words = 10;
+    }
+    
+    // Parse beam_width
+    const char *bw_start = strstr(upload_data, "\"beam_width\":");
+    if (bw_start) {
+        bw_start += 13;
+        beam_width = atoi(bw_start);
+        if (beam_width < 1) beam_width = 1;
+        if (beam_width > 10) beam_width = 10;
+    }
+    
+    if (strlen(word1) == 0 || strlen(word2) == 0) {
+        return send_json_response(connection, "{\"error\":\"Missing word1 or word2\"}", 400);
+    }
+    
+    // Get beam search results
+    int result_count;
+    BeamResult *completions = lm_beam_search(g_model, word1, word2, num_words, beam_width, &result_count);
+    
+    if (!completions || result_count == 0) {
+        return send_json_response(connection, "{\"completions\":[]}", 200);
+    }
+    
+    // Build JSON response
+    char json[8192] = "{\"completions\":[";
+    
+    for (int i = 0; i < result_count; i++) {
+        char comp[512];
+        snprintf(comp, sizeof(comp),
+                 "%s{\"sentence\":\"%s\",\"probability\":%.6f}",
+                 i > 0 ? "," : "",
+                 completions[i].sentence,
+                 completions[i].probability);
+        strcat(json, comp);
+    }
+    
+    strcat(json, "]}");
+    
+    free_beam_results(completions, result_count);
+    
+    return send_json_response(connection, json, 200);
+}
+
 // Request context structure
 struct ConnectionInfo {
     char *data;
@@ -210,6 +299,8 @@ static enum MHD_Result answer_to_connection(void *cls, struct MHD_Connection *co
         int ret;
         if (strcmp(url, "/predict") == 0) {
             ret = handle_predict(connection, con_info->data ? con_info->data : "", con_info->size);
+        } else if (strcmp(url, "/generate") == 0) {
+            ret = handle_generate(connection, con_info->data ? con_info->data : "", con_info->size);
         } else {
             ret = send_json_response(connection, "{\"error\":\"Not found\"}", 404);
         }
@@ -267,9 +358,10 @@ int start_api_server_on_port(const char *model_path, int port) {
     }
     
     printf("✓ API server running at http://localhost:%d\n", port);
-    printf("  GET  /health  - Health check\n");
-    printf("  GET  /stats   - Model statistics\n");
-    printf("  POST /predict - Get predictions\n");
+    printf("  GET  /health   - Health check\n");
+    printf("  GET  /stats    - Model statistics\n");
+    printf("  POST /predict  - Get word predictions\n");
+    printf("  POST /generate - Generate sentence completions (beam search)\n");
     printf("\nServer running. Send SIGINT (Ctrl+C) or SIGTERM to stop.\n");
 
     // Setup signal handling
