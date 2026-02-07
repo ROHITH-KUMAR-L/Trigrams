@@ -81,6 +81,11 @@ echo "Starting code format server (port 5001)..."
 node format_server.js &
 FORMAT_PID=$!
 
+# Start training server
+echo "Starting model training server (port 5002)..."
+node training_server.js &
+TRAINING_PID=$!
+
 # Start frontend
 echo "Starting frontend dev server..."
 npm run dev &
@@ -90,11 +95,13 @@ echo -e "\n\033[0;32mAll services started!\033[0m"
 echo -e "English Text API: http://localhost:8080"
 echo -e "Python Code API:  http://localhost:8081"
 echo -e "Format Server:    http://localhost:5001"
-echo -e "Frontend:         http://localhost:3000"
+echo -e "Training Server:  http://localhost:5002"
+echo -e "Frontend:         http://localhost:3001"
 echo -e "\nRoutes:"
 echo -e "  /            - Trigram Language Model (English)"
 echo -e "  /code-editor - Python Code Editor"
+echo -e "  /train       - Train Custom Model"
 echo -e "\nPress Ctrl+C to stop all services.\n"
 
-wait $BACKEND_PID $CODE_BACKEND_PID $FORMAT_PID $FRONTEND_PID
+wait $BACKEND_PID $CODE_BACKEND_PID $FORMAT_PID $TRAINING_PID $FRONTEND_PID
 

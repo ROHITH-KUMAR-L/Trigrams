@@ -16,7 +16,8 @@
 .header-nav {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    gap: 15px;
 }
 
 .nav-link {
