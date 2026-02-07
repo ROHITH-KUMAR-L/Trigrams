@@ -12,7 +12,14 @@ typedef struct TreeNode {
 typedef struct {
     TreeNode *root;
     int total_trigrams;
+    int vocabulary_size;  // Total unique words in vocabulary (for smoothing)
 } LanguageModel;
+
+// Beam search result structure
+typedef struct {
+    char *sentence;
+    float probability;
+} BeamResult;
 
 // Function declarations 
 LanguageModel* lm_create();
@@ -37,5 +44,9 @@ void tree_node_free(TreeNode *node);
 
 int lm_save_to_file(LanguageModel *model, const char *filename);
 LanguageModel* lm_load_from_file(const char *filename);
+
+// Beam search for sentence generation
+BeamResult* lm_beam_search(LanguageModel *model, const char *w1, const char *w2, int num_words, int beam_width, int *result_count);
+void free_beam_results(BeamResult *results, int count);
 
 #endif

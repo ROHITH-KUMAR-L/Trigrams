@@ -1,0 +1,79 @@
+.sentence-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    margin-top: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.sentence-header {
+    padding: 10px 15px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    background: #f9f9f9;
+}
+
+.sentence-loading {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.sentence-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sentence-item:last-child {
+    border-bottom: none;
+}
+
+.sentence-item:hover,
+.sentence-item.selected {
+    background: #f5f5ff;
+}
+
+.sentence-text {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.sentence-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.probability-bar {
+    flex: 1;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.probability-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.probability-value {
+    font-size: 11px;
+    color: #888;
+    min-width: 50px;
+    text-align: right;
+}

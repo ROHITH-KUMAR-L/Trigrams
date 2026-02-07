@@ -52,6 +52,22 @@ export const checkHealth = async () => {
     }
 };
 
+// Sentence completion API (beam search)
+export const getSentenceCompletions = async (word1, word2, numWords = 5, beamWidth = 3) => {
+    try {
+        const response = await api.post('/generate', { 
+            word1, 
+            word2, 
+            num_words: numWords, 
+            beam_width: beamWidth 
+        });
+        return response.data.completions || [];
+    } catch (error) {
+        console.error('API Error:', error);
+        return [];
+    }
+};
+
 // Format server API (runs on port 5001)
 const FORMAT_API_URL = 'http://127.0.0.1:5001';
 
