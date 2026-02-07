@@ -68,6 +68,7 @@ HashMap* generate_trigrams(SLL *word_list) {
     
     printf("\n");  // Newline after progress dots
     printf("Generated %d trigrams (%d unique)\n", trigram_count, trigram_map->count);
+    fflush(stdout);
     return trigram_map;
 }
 

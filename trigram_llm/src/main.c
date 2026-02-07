@@ -104,45 +104,65 @@ int main(int argc, char *argv[]) {
     if (train_mode) {
         printf("=== TRAINING MODE ===\n\n");
         
+        // Step 0: Try to load existing model
+        printf("Step 0: Checking for existing model...\n");
+        fflush(stdout);
+        model = lm_load_from_file(MODEL_FILE);
+        if (model) {
+            printf("✓ Loaded existing model with %d trigrams. New data will be merged.\n", model->total_trigrams);
+            fflush(stdout);
+        } else {
+            printf("No existing model found. Creating new model.\n");
+            fflush(stdout);
+            model = lm_create();
+        }
+        
         // Step 1: Read and tokenize input file (using SLL)
-        printf("Step 1: Reading and tokenizing input file...\n");
+        printf("\nStep 1: Reading and tokenizing input file...\n");
+        fflush(stdout);
         SLL *word_list = read_and_tokenize(INPUT_FILE);
         if (!word_list) {
             fprintf(stderr, "Failed to read input file\n");
+            if (model) lm_free(model);
             return 1;
         }
         
         if (sll_size(word_list) < 3) {
             fprintf(stderr, "Error: Need at least 3 words to generate trigrams\n");
             sll_free(word_list);
+            if (model) lm_free(model);
             return 1;
         }
         
         // Step 2: Generate trigrams using Queue-based sliding window
         printf("\nStep 2: Generating trigrams using queue-based sliding window...\n");
+        fflush(stdout);
         trigram_map = generate_trigrams(word_list);
         if (!trigram_map) {
             sll_free(word_list);
+            if (model) lm_free(model);
             return 1;
         }
         
-        // Step 3: Display top trigrams
+        // Step 3: Display top trigrams from new data
         save_trigram_frequencies(trigram_map, NULL, 10); // Print top 10 to stdout
         
-        // Step 4: Build Tree-based Language Model
-        printf("\nStep 3: Building tree-based language model...\n");
-        model = lm_create();
+        // Step 4: Merge new trigrams into existing model
+        printf("\nStep 3: Merging new trigrams into language model...\n");
+        fflush(stdout);
         
-        // Traverse word list again to build tree
+        // Traverse word list to insert all trigrams into model
         Queue *window = queue_create(3);
         SLLNode *current = word_list->head;
         
+        int merged_count = 0;
         while (current) {
             enqueue(window, current->word);
             
             if (queue_size(window) == 3) {
                 char **words = queue_to_array(window);
                 lm_insert_trigram(model, words[0], words[1], words[2]);
+                merged_count++;
                 free(words);
             }
             
@@ -150,16 +170,21 @@ int main(int argc, char *argv[]) {
         }
         
         queue_free(window);
+        printf("✓ Merged %d new trigrams into model.\n", merged_count);
+        fflush(stdout);
         lm_print_statistics(model);
         
         // Step 5: Save results
         printf("\nStep 4: Saving results...\n");
+        fflush(stdout);
         save_results(OUTPUT_FILE, trigram_map, model);
         
         // Step 6: Save model to file
         printf("\nStep 5: Saving trained model...\n");
+        fflush(stdout);
         if (lm_save_to_file(model, MODEL_FILE)) {
             printf("✓ Model saved successfully! Use --load to skip training next time.\n");
+            fflush(stdout);
         }
         
         // Cleanup word list

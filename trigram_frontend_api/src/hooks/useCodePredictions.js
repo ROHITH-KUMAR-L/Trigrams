@@ -8,7 +8,7 @@ import { getCodePredictions } from '../services/api';
  */
 export function useCodePredictions(currentLine, temperature = 1.0) {
     const [predictions, setPredictions] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const fetchPredictions = useCallback(async () => {
         if (!currentLine || currentLine.trim().length === 0) {
@@ -18,7 +18,7 @@ export function useCodePredictions(currentLine, temperature = 1.0) {
 
         // Extract tokens from current line (split by whitespace)
         const tokens = currentLine.trim().split(/\s+/).filter(t => t.length > 0);
-        
+
         // Need at least 2 tokens for trigram prediction
         if (tokens.length < 2) {
             setPredictions([]);
@@ -29,7 +29,7 @@ export function useCodePredictions(currentLine, temperature = 1.0) {
         const word1 = tokens[tokens.length - 2].toLowerCase();
         const word2 = tokens[tokens.length - 1].toLowerCase();
 
-        setLoading(true);
+        setIsLoading(true);
         try {
             const results = await getCodePredictions(word1, word2, temperature);
             setPredictions(results);
@@ -37,7 +37,7 @@ export function useCodePredictions(currentLine, temperature = 1.0) {
             console.error('Prediction error:', error);
             setPredictions([]);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     }, [currentLine, temperature]);
 
@@ -47,5 +47,7 @@ export function useCodePredictions(currentLine, temperature = 1.0) {
         return () => clearTimeout(timeoutId);
     }, [fetchPredictions]);
 
-    return { predictions, loading };
+    return { predictions, isLoading };
 }
+
+export default useCodePredictions;

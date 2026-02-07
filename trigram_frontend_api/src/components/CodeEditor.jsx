@@ -1,12 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
-import { useCodePredictions } from '../hooks/useCodePredictions';
+import useCodePredictions from '../hooks/useCodePredictions';
 import { formatCode } from '../services/api';
 import './CodeEditor.css';
 
 export default function CodeEditor() {
-    const [code, setCode] = useState('# Start typing Python code...\n# Predictions will appear as you type\n\n');
+    const [code, setCode] = useState('import numpy as np\nimport matplotlib.pyplot as plt\nimport pandas as pd\n');
     const [currentLine, setCurrentLine] = useState('');
     const [temperature, setTemperature] = useState(1.0);
     const [isFormatting, setIsFormatting] = useState(false);
@@ -15,7 +15,7 @@ export default function CodeEditor() {
     const monacoRef = useRef(null);
     const predictionsRef = useRef([]); // Store predictions in ref for Monaco access
 
-    const { predictions, loading } = useCodePredictions(currentLine, temperature);
+    const { predictions, isLoading } = useCodePredictions(currentLine, temperature);
 
     // Keep ref in sync with state
     useEffect(() => {
@@ -43,8 +43,8 @@ export default function CodeEditor() {
                 const suggestions = currentPredictions.map((pred, index) => ({
                     label: pred.word,
                     kind: monaco.languages.CompletionItemKind.Keyword,
-                    detail: `${(pred.probability * 100).toFixed(1)}%`,
-                    documentation: `Trigram prediction (count: ${pred.count})`,
+                    detail: `${(pred.probability * 100).toFixed(1)}% `,
+                    documentation: `Trigram prediction(count: ${pred.count})`,
                     insertText: pred.word + ' ',
                     range: range,
                     sortText: String(index).padStart(3, '0'),
@@ -125,7 +125,7 @@ export default function CodeEditor() {
             <div className="code-editor-header">
                 <Link to="/" className="back-link">← Back to Home</Link>
                 <h1>Python Code Editor</h1>
-                <p>Type 2+ words → see predictions → press ↓ to select</p>
+                <p>Type 2+ words — see predictions — press ↓ to select</p>
             </div>
 
             <div className="code-editor-toolbar">
@@ -200,7 +200,7 @@ export default function CodeEditor() {
 
             <div className="predictions-panel">
                 <h3>
-                    {loading ? '⏳ Loading...' : `💡 Predictions (${predictions.length})`}
+                    {isLoading ? '⏳ Loading...' : `💡 Predictions (${predictions.length})`}
                 </h3>
                 {predictions.length > 0 ? (
                     <div className="prediction-chips">
