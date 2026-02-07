@@ -201,3 +201,17 @@
 .hash-value {
     color: #b5cea8;
 }
+
+/* Current Predictions */
+.current-predictions {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #333;
+}
+
+.predictions-label {
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}

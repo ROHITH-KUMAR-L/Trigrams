@@ -34,6 +34,15 @@ export default function SearchBar({ text, setText, predictions, completions = []
             } else {
                 insertSentence(currentItems[selectedIndex].sentence);
             }
+        } else if (e.key === 'Tab' && currentItems.length > 0) {
+            e.preventDefault();
+            // Tab accepts selected item, or first item if none selected
+            const idx = selectedIndex >= 0 ? selectedIndex : 0;
+            if (mode === 'word') {
+                insertPrediction(currentItems[idx].word);
+            } else {
+                insertSentence(currentItems[idx].sentence);
+            }
         } else if (e.key === 'Escape') {
             setShowDropdown(false);
         }

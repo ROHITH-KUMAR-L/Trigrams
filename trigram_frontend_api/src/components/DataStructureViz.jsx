@@ -1,4 +1,5 @@
 import React from 'react';
+import InteractiveTree from './InteractiveTree';
 import './DataStructureViz.css';
 
 const DataStructureViz = ({ text, predictions }) => {
@@ -55,37 +56,19 @@ const DataStructureViz = ({ text, predictions }) => {
             </div>
 
             <div className="viz-split">
-                {/* 3. Prediction (Tree) */}
+                {/* 3. Interactive Prediction Tree */}
                 <div className="viz-section" style={{ flex: 1 }}>
-                    <div className="viz-section-title">3. Prediction (N-ary Tree)</div>
-                    {w1 && w2 ? (
-                        <div className="tree-box">
-                            <div className="tree-node root">ROOT</div>
-                            <div className="tree-path-line"></div>
-
-                            <div className="tree-node w1">"{w1}"</div>
-                            <div className="tree-path-line"></div>
-
-                            <div className="tree-node w2">"{w2}"</div>
-                            <div className="tree-path-line"></div>
-
-                            <div className="tree-children">
-                                {predictions.length > 0 ? (
-                                    predictions.slice(0, 3).map((pred, i) => (
-                                        <div key={i} className="prediction-node">
-                                            "{pred.word}"
-                                            <span className="pred-prob">
-                                                {(pred.probability * 100).toFixed(0)}%
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <span style={{ color: '#666' }}>No children (Leaf)</span>
-                                )}
-                            </div>
+                    <div className="viz-section-title">3. Interactive Tree Explorer</div>
+                    <InteractiveTree rootWord1={w1} rootWord2={w2} />
+                    {predictions.length > 0 && (
+                        <div className="current-predictions">
+                            <div className="predictions-label">Current Predictions:</div>
+                            {predictions.slice(0, 3).map((pred, i) => (
+                                <div key={i} className="prediction-node">
+                                    "{pred.word}" <span className="pred-prob">{(pred.probability * 100).toFixed(0)}%</span>
+                                </div>
+                            ))}
                         </div>
-                    ) : (
-                        <div style={{ color: '#666' }}>Need 2 words to traverse tree.</div>
                     )}
                 </div>
 

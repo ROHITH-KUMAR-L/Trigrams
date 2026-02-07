@@ -186,24 +186,104 @@ PredictionResult* lm_predict_top_n(LanguageModel *model, const char *w1, const c
         level2 = find_child(level1, w2);
     }
     
-    // If context not found, return top unigrams with uniform smoothed probability (fallback)
+    // ============ STUPID BACKOFF IMPLEMENTATION ============
+    // Backoff weight λ = 0.4 (standard for Stupid Backoff)
+    const float BACKOFF_LAMBDA = 0.4f;
+    
+    // If full trigram context (w1, w2) not found, try backoff
     if (!level2 || level2->num_children == 0) {
-        // Fallback: return most common first words as suggestions with smoothed uniform prob
-        int num_fallback = (n < model->root->num_children) ? n : model->root->num_children;
-        if (num_fallback == 0) return NULL;
         
-        PredictionResult *results = (PredictionResult*)malloc(sizeof(PredictionResult) * num_fallback);
-        if (!results) return NULL;
+        // --- BACKOFF LEVEL 1: Try bigram (just w2) ---
+        // Search for w2 as a first-level child in any context
+        TreeNode *bigram_node = NULL;
+        int total_bigram_count = 0;
         
-        // Get most common first words as fallback
-        float uniform_prob = 1.0f / V;  // Smoothed probability for unseen context
-        for (int i = 0; i < num_fallback; i++) {
-            results[i].word = strdup(model->root->children[i]->word);
-            results[i].count = 1;  // Smoothed count
-            results[i].probability = uniform_prob;
+        // Look for w2 directly under root (as if it were w1)
+        bigram_node = find_child(model->root, w2);
+        
+        if (bigram_node && bigram_node->num_children > 0) {
+            // Found bigram context! Use children of w2 with backoff weight
+            int num_candidates = bigram_node->num_children;
+            PredictionResult *candidates = (PredictionResult*)malloc(sizeof(PredictionResult) * num_candidates);
+            if (!candidates) return NULL;
+            
+            // Calculate total count for normalization
+            for (int i = 0; i < num_candidates; i++) {
+                total_bigram_count += bigram_node->children[i]->count;
+            }
+            
+            // Build candidates with backoff probability
+            for (int i = 0; i < num_candidates; i++) {
+                candidates[i].word = bigram_node->children[i]->word;
+                candidates[i].count = bigram_node->children[i]->count;
+                // Stupid Backoff: P(w|w2) = λ * count(w2,w) / count(w2)
+                candidates[i].probability = BACKOFF_LAMBDA * 
+                    ((float)candidates[i].count / (float)total_bigram_count);
+            }
+            
+            // Sort by probability
+            qsort(candidates, num_candidates, sizeof(PredictionResult), compare_predictions_prob);
+            
+            // Return top N
+            int final_count = (n < num_candidates) ? n : num_candidates;
+            PredictionResult *results = (PredictionResult*)malloc(sizeof(PredictionResult) * final_count);
+            if (!results) { free(candidates); return NULL; }
+            
+            for (int i = 0; i < final_count; i++) {
+                results[i].word = strdup(candidates[i].word);
+                results[i].count = candidates[i].count;
+                results[i].probability = candidates[i].probability;
+            }
+            
+            free(candidates);
+            *result_count = final_count;
+            return results;
         }
         
-        *result_count = num_fallback;
+        // --- BACKOFF LEVEL 2: Fall back to unigram (most common words) ---
+        // Use the most frequent first-level words as predictions
+        int num_unigrams = model->root->num_children;
+        if (num_unigrams == 0) return NULL;
+        
+        PredictionResult *candidates = (PredictionResult*)malloc(sizeof(PredictionResult) * num_unigrams);
+        if (!candidates) return NULL;
+        
+        // Calculate total unigram count
+        int total_unigram_count = 0;
+        for (int i = 0; i < num_unigrams; i++) {
+            // Sum up all children counts for each first word as a proxy for unigram frequency
+            int word_count = 0;
+            for (int j = 0; j < model->root->children[i]->num_children; j++) {
+                word_count += model->root->children[i]->children[j]->count;
+            }
+            candidates[i].word = model->root->children[i]->word;
+            candidates[i].count = word_count > 0 ? word_count : 1;
+            total_unigram_count += candidates[i].count;
+        }
+        
+        // Apply double backoff weight: λ² = 0.16
+        float double_backoff = BACKOFF_LAMBDA * BACKOFF_LAMBDA;
+        for (int i = 0; i < num_unigrams; i++) {
+            candidates[i].probability = double_backoff * 
+                ((float)candidates[i].count / (float)(total_unigram_count > 0 ? total_unigram_count : 1));
+        }
+        
+        // Sort by count (highest first)
+        qsort(candidates, num_unigrams, sizeof(PredictionResult), compare_predictions_prob);
+        
+        // Return top N
+        int final_count = (n < num_unigrams) ? n : num_unigrams;
+        PredictionResult *results = (PredictionResult*)malloc(sizeof(PredictionResult) * final_count);
+        if (!results) { free(candidates); return NULL; }
+        
+        for (int i = 0; i < final_count; i++) {
+            results[i].word = strdup(candidates[i].word);
+            results[i].count = candidates[i].count;
+            results[i].probability = candidates[i].probability;
+        }
+        
+        free(candidates);
+        *result_count = final_count;
         return results;
     }
     

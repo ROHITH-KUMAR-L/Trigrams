@@ -37,3 +37,20 @@
 .prediction-dropdown::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+.keyboard-hints {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    font-size: 11px;
+    color: #888;
+}
+
+.keyboard-hints span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

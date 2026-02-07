@@ -25,6 +25,11 @@ export default function PredictionDropdown({ predictions, onSelect, selectedInde
                     isSelected={index === selectedIndex}
                 />
             ))}
+            <div className="keyboard-hints">
+                <span>↑↓ Navigate</span>
+                <span>Tab Accept</span>
+                <span>Esc Close</span>
+            </div>
         </div>
     );
 }
