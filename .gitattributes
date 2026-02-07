@@ -2,3 +2,5 @@ trigram_llm/result.txt filter=lfs diff=lfs merge=lfs -text
 trigram_llm/output/result.txt filter=lfs diff=lfs merge=lfs -text
 trigram_llm/data/input.txt filter=lfs diff=lfs merge=lfs -text
 trigram_llm/output/model.bin filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+trigram_llm/output/*.txt filter=lfs diff=lfs merge=lfs -text
