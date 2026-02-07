@@ -12,9 +12,14 @@
     border-bottom: none;
 }
 
-.prediction-item:hover,
+.prediction-item:hover {
+    background: #f8f9ff;
+}
+
 .prediction-item.selected {
-    background: linear-gradient(90deg, #f8f9ff 0%, #ffffff 100%);
+    background: #e3f2fd;
+    border-left: 4px solid #2196F3;
+    padding-left: 12px;
 }
 
 .prediction-word {

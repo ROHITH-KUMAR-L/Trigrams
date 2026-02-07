@@ -137,11 +137,16 @@ int handle_predict(struct MHD_Connection *connection, const char *upload_data, s
     
     for (int i = 0; i < result_count; i++) {
         char pred[256];
+        // Ensure probability is a valid number for JSON
+        float prob = predictions[i].probability;
+        if (isnan(prob) || isinf(prob)) {
+            prob = 0.0f;
+        }
         snprintf(pred, sizeof(pred),
                  "%s{\"word\":\"%s\",\"probability\":%.4f,\"count\":%d}",
                  i > 0 ? "," : "",
                  predictions[i].word,
-                 predictions[i].probability,
+                 prob,
                  predictions[i].count);
         strcat(json, pred);
     }
