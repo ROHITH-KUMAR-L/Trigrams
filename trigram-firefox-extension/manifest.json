@@ -1,0 +1,72 @@
+{
+    "manifest_version": 2,
+    "name": "Trigram Autofill",
+    "version": "1.0.0",
+    "description": "AI-powered text prediction using local trigram model",
+    "author": "Raghottam",
+    "homepage_url": "https://github.com/ROHITH-KUMAR-L/Trigrams",
+    "icons": {
+        "48": "icons/icon-48.png",
+        "96": "icons/icon-96.png"
+    },
+    "permissions": [
+        "activeTab",
+        "storage",
+        "clipboardWrite",
+        "http://127.0.0.1/*"
+    ],
+    "background": {
+        "scripts": [
+            "background.js"
+        ],
+        "persistent": false
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.notion.so/*",
+                "*://*.notion.site/*",
+                "*://overleaf.com/*",
+                "*://*.overleaf.com/*",
+                "*://github.com/*",
+                "*://gist.github.com/*",
+                "*://*.wordpress.com/*",
+                "*://*.wordpress.org/*",
+                "*://etherpad.org/*",
+                "*://*.etherpad.org/*",
+                "*://pad.riseup.net/*",
+                "*://*.hackmd.io/*",
+                "*://stackedit.io/*",
+                "*://codepen.io/*",
+                "*://jsfiddle.net/*",
+                "*://codesandbox.io/*",
+                "*://medium.com/*",
+                "*://*.medium.com/*",
+                "*://reddit.com/*",
+                "*://*.reddit.com/*",
+                "*://twitter.com/*",
+                "*://*.twitter.com/*",
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "css": [
+                "content.css"
+            ],
+            "run_at": "document_idle",
+            "all_frames": false
+        }
+    ],
+    "browser_action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "48": "icons/icon-48.png",
+            "96": "icons/icon-96.png"
+        },
+        "default_title": "Trigram Autofill"
+    },
+    "web_accessible_resources": [
+        "content.css"
+    ]
+}

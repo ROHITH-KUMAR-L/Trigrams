@@ -1,0 +1,149 @@
+/**
+ * Trigram Autofill - Content Script Styles
+ * Styles for the prediction dropdown overlay
+ */
+
+/* Prediction dropdown container */
+.trigram-dropdown {
+    position: fixed;
+    z-index: 2147483647;
+    /* Maximum z-index */
+    min-width: 200px;
+    max-width: 350px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(99, 102, 241, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: trigram-slideIn 0.15s ease-out;
+}
+
+@keyframes trigram-slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hidden state */
+.trigram-hidden {
+    display: none !important;
+}
+
+/* Individual prediction item */
+.trigram-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.trigram-item:last-child {
+    border-bottom: none;
+}
+
+.trigram-item:hover {
+    background: rgba(99, 102, 241, 0.15);
+}
+
+/* Selected item */
+.trigram-selected {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%);
+    border-left: 3px solid #6366f1;
+}
+
+.trigram-selected .trigram-word {
+    color: #a5b4fc;
+}
+
+/* Word text */
+.trigram-word {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e2e8f0;
+    flex: 1;
+    margin-right: 12px;
+}
+
+/* Probability badge */
+.trigram-prob {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    background: rgba(100, 116, 139, 0.2);
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-right: 8px;
+}
+
+/* Tab hint */
+.trigram-hint {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Loading state */
+.trigram-loading {
+    padding: 14px 18px;
+    color: #94a3b8;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Error state */
+.trigram-error {
+    padding: 14px 18px;
+    color: #f87171;
+    font-size: 13px;
+    text-align: center;
+    background: rgba(248, 113, 113, 0.1);
+}
+
+/* Header (optional, for future use) */
+.trigram-header {
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Scrollbar styling */
+.trigram-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.trigram-dropdown::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.trigram-dropdown::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 3px;
+}
+
+.trigram-dropdown::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.5);
+}

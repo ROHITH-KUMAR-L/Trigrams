@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trigram Autofill</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="logo">
+        <span class="logo-icon">🔮</span>
+        <h1>Trigram Autofill</h1>
+      </div>
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking...</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="popup-main">
+      <!-- Enable/Disable Toggle -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Enable Autofill</span>
+          <span class="setting-desc">Show predictions while typing</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="enableToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <!-- Temperature Slider -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-label">Temperature</span>
+          <span class="setting-desc">Creativity level: <span id="tempValue">1.0</span></span>
+        </div>
+        <input type="range" id="tempSlider" min="0.1" max="2.0" step="0.1" value="1.0" class="slider">
+      </div>
+
+      <!-- API URL -->
+      <div class="setting-row vertical">
+        <div class="setting-info">
+          <span class="setting-label">API URL</span>
+          <span class="setting-desc">Local trigram server address</span>
+        </div>
+        <input type="text" id="apiUrl" value="http://127.0.0.1:8080" class="input-field">
+      </div>
+
+      <!-- Stats Section -->
+      <div class="stats-section" id="statsSection">
+        <h3>Model Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-value" id="totalTrigrams">-</span>
+            <span class="stat-label">Total Trigrams</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="uniqueWords">-</span>
+            <span class="stat-label">Unique Words</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div class="error-message hidden" id="errorMessage">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">Cannot connect to API</span>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <button class="btn btn-secondary" id="refreshBtn">
+        🔄 Refresh
+      </button>
+      <button class="btn btn-primary" id="saveBtn">
+        💾 Save Settings
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
