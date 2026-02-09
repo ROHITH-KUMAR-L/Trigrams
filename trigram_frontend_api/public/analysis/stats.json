@@ -1,0 +1,17 @@
+{
+  "model_name": "Trigram Language Model",
+  "total_trigrams": 11062203,
+  "unique_words": 97277,
+  "vocabulary_size": 97277,
+  "avg_perplexity": 135.4,
+  "top_k_accuracy": {
+    "top_1": 32.5,
+    "top_3": 58.2,
+    "top_5": 71.8,
+    "top_10": 85.3
+  },
+  "smoothing_technique": "Stupid Backoff",
+  "backoff_factor": 0.4,
+  "avg_response_time_ms": 4.2,
+  "p95_response_time_ms": 12.8
+}

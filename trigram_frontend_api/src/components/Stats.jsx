@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getStats, checkHealth } from '../services/api';
+import CountUp from './CountUp';
 import './Stats.css';
 
 export default function Stats() {
     const [stats, setStats] = useState(null);
     const [health, setHealth] = useState(null);
+    const [dataLoaded, setDataLoaded] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -14,6 +16,7 @@ export default function Stats() {
             ]);
             setStats(statsData);
             setHealth(healthData);
+            setDataLoaded(true);
         };
         fetchData();
     }, []);
@@ -33,11 +36,31 @@ export default function Stats() {
             </div>
             <div className="stat-item">
                 <div className="stat-label">Total Trigrams</div>
-                <div className="stat-value">{stats.total_trigrams?.toLocaleString()}</div>
+                <div className="stat-value">
+                    <CountUp
+                        from={0}
+                        to={stats.total_trigrams || 0}
+                        separator=","
+                        direction="up"
+                        duration={1.5}
+                        className="count-up-text"
+                        startCounting={dataLoaded}
+                    />
+                </div>
             </div>
             <div className="stat-item">
                 <div className="stat-label">Unique Words</div>
-                <div className="stat-value">{stats.unique_first_words?.toLocaleString()}</div>
+                <div className="stat-value">
+                    <CountUp
+                        from={0}
+                        to={stats.unique_first_words || 0}
+                        separator=","
+                        direction="up"
+                        duration={1.5}
+                        className="count-up-text"
+                        startCounting={dataLoaded}
+                    />
+                </div>
             </div>
         </div>
     );

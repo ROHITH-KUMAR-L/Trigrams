@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-
+import TextType from './TextType';
 import PredictionDropdown from './PredictionDropdown';
 import SentenceDropdown from './SentenceDropdown';
 import './SearchBar.css';
@@ -65,16 +65,39 @@ export default function SearchBar({ text, setText, predictions, completions = []
     return (
         <div className="search-container">
             <div className="search-bar-wrapper">
-                <input
-                    ref={inputRef}
-                    type="text"
-                    className="search-input"
-                    placeholder="Start typing... (e.g., 'operating system')"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => currentItems.length > 0 && setShowDropdown(true)}
-                />
+                <div style={{ position: 'relative' }}>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        className="search-input"
+                        placeholder=""
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onFocus={() => currentItems.length > 0 && setShowDropdown(true)}
+                    />
+                    {!text && (
+                        <div
+                            className="typing-placeholder"
+                            onClick={() => inputRef.current?.focus()}
+                        >
+                            <TextType
+                                texts={[
+                                    "Start typing...",
+                                    "Try 'operating system'...",
+                                    "Type 'machine learning'...",
+                                    "Try 'data structure'..."
+                                ]}
+                                typingSpeed={75}
+                                deletingSpeed={50}
+                                pauseDuration={2000}
+                                showCursor={true}
+                                cursorCharacter="_"
+                                cursorBlinkDuration={0.5}
+                            />
+                        </div>
+                    )}
+                </div>
                 {showDropdown && mode === 'word' && (
                     <PredictionDropdown
                         predictions={predictions}

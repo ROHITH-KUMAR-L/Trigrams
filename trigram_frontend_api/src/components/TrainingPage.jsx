@@ -1,47 +1,28 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import DropZone from './DropZone';
+import GradientText from './GradientText';
 import './TrainingPage.css';
 
 export default function TrainingPage() {
     const [file, setFile] = useState(null);
-    const [isDragging, setIsDragging] = useState(false);
     const [isTraining, setIsTraining] = useState(false);
     const [progress, setProgress] = useState({ step: '', percent: 0 });
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    const handleDragOver = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    }, []);
-
-    const handleDrop = useCallback((e) => {
-        e.preventDefault();
-        setIsDragging(false);
-
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile && droppedFile.name.endsWith('.txt')) {
-            setFile(droppedFile);
-            setError(null);
-        } else {
-            setError('Please upload a .txt file');
-        }
-    }, []);
-
-    const handleFileSelect = (e) => {
-        const selectedFile = e.target.files[0];
+    const handleFileSelect = useCallback((selectedFile) => {
         if (selectedFile && selectedFile.name.endsWith('.txt')) {
             setFile(selectedFile);
             setError(null);
         } else {
             setError('Please upload a .txt file');
         }
-    };
+    }, []);
+
+    const handleRemoveFile = useCallback(() => {
+        setFile(null);
+    }, []);
 
     const handleTrain = async () => {
         if (!file) {
@@ -109,43 +90,40 @@ export default function TrainingPage() {
         <div className="training-page">
             <div className="training-header">
                 <Link to="/" className="back-link">← Back to Home</Link>
-                <h1>  Train Custom Model</h1>
+                <h1>Train Custom Model</h1>
                 <p>Upload a .txt file to train a new trigram language model</p>
             </div>
 
             <div className="training-container">
                 <div className="upload-section">
-                    <div
-                        className={`dropzone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() => document.getElementById('file-input').click()}
+                    <DropZone
+                        onFileSelect={handleFileSelect}
+                        acceptedFileTypes={['.txt']}
+                        acceptedMimeTypes={['text/plain']}
+                        isFilled={!!file}
                     >
-                        <input
-                            id="file-input"
-                            type="file"
-                            accept=".txt"
-                            onChange={handleFileSelect}
-                            style={{ display: 'none' }}
-                        />
-
-                        {file ? (
-                            <div className="file-info">
-                                <div className="file-icon">📄</div>
-                                <div className="file-details">
-                                    <div className="file-name">{file.name}</div>
-                                    <div className="file-size">{(file.size / 1024).toFixed(2)} KB</div>
+                        {file && (
+                            <div className="dropzone-file-info">
+                                <span className="dropzone-file-icon">📄</span>
+                                <div className="dropzone-file-details">
+                                    <div className="dropzone-file-name">{file.name}</div>
+                                    <div className="dropzone-file-size">
+                                        {(file.size / 1024).toFixed(2)} KB
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="dropzone-content">
-                                <div className="upload-icon">📁</div>
-                                <p className="upload-text">Drag & drop your .txt file here</p>
-                                <p className="upload-subtext">or click to browse</p>
+                                <button
+                                    className="dropzone-file-remove"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveFile();
+                                    }}
+                                    title="Remove file"
+                                >
+                                    ✕
+                                </button>
                             </div>
                         )}
-                    </div>
+                    </DropZone>
 
                     <button
                         className="train-button"
