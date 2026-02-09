@@ -158,12 +158,18 @@
 }
 
 /* Search Card */
+.search-card {
+    overflow: visible;
+    z-index: 10;
+}
+
 .search-card .card-content {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
     padding: 30px;
+    overflow: visible;
 }
 
 /* Controls Card */
