@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include "api_server.h"
 #include "tree.h"
+#include <math.h>
 #include <time.h>
 
 // Global model instance

@@ -18,7 +18,6 @@ function App() {
         <div className="app">
             <header className="app-header">
                 <div className="header-nav">
-                    <Link to="/code-editor" className="nav-link"> Code Editor</Link>
                     <Link to="/train" className="nav-link"> Train Model</Link>
                 </div>
                 <h1 className="app-title">Trigram Language Model</h1>

@@ -67,21 +67,11 @@ echo "Starting English text API server (port 8080)..."
 ./trigram_api -m ../trigram_llm/output/model.bin -p 8080 &
 BACKEND_PID=$!
 
-# Start Python code backend (port 8081)
-echo "Starting Python code API server (port 8081)..."
-./trigram_api -m ../trigram_llm/output_py/model.bin -p 8081 &
-CODE_BACKEND_PID=$!
-
-# Wait a moment for backends to initialize
+# Wait a moment for backend to initialize
 sleep 2
 
-# Start format server
-cd "$FRONTEND_DIR"
-echo "Starting code format server (port 5001)..."
-node format_server.js &
-FORMAT_PID=$!
-
 # Start training server
+cd "$FRONTEND_DIR"
 echo "Starting model training server (port 5002)..."
 node training_server.js &
 TRAINING_PID=$!
@@ -93,14 +83,11 @@ FRONTEND_PID=$!
 
 echo -e "\n\033[0;32mAll services started!\033[0m"
 echo -e "English Text API: http://localhost:8080"
-echo -e "Python Code API:  http://localhost:8081"
-echo -e "Format Server:    http://localhost:5001"
 echo -e "Training Server:  http://localhost:5002"
 echo -e "Frontend:         http://localhost:3001"
 echo -e "\nRoutes:"
 echo -e "  /            - Trigram Language Model (English)"
-echo -e "  /code-editor - Python Code Editor"
 echo -e "  /train       - Train Custom Model"
 echo -e "\nPress Ctrl+C to stop all services.\n"
 
-wait $BACKEND_PID $CODE_BACKEND_PID $FORMAT_PID $TRAINING_PID $FRONTEND_PID
+wait $BACKEND_PID $TRAINING_PID $FRONTEND_PID
