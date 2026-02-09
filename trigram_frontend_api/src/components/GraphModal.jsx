@@ -89,6 +89,26 @@ export default function GraphModal({ graph, onClose }) {
 
     const details = graphDetails[graph.id];
 
+    // Safety check for undefined graph details
+    if (!details) {
+        return (
+            <div className="modal-overlay" onClick={onClose}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                    <button className="modal-close" onClick={onClose}>✕</button>
+                    <div className="modal-header">
+                        <h2>{graph.title}</h2>
+                    </div>
+                    <div className="modal-body">
+                        <p>Details not available for this graph. Graph ID: {graph.id}</p>
+                    </div>
+                    <div className="modal-footer">
+                        <button className="btn-primary" onClick={onClose}>Close</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -104,6 +124,13 @@ export default function GraphModal({ graph, onClose }) {
                 </div>
 
                 <div className="modal-body">
+                    <section className="detail-section">
+                        <h3>Distribution Type</h3>
+                        <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#676666ff' }}>
+                            {details.distribution}
+                        </p>
+                    </section>
+
                     <section className="detail-section">
                         <h3>Mathematical Formula</h3>
                         <code className="formula">{details.formula}</code>
