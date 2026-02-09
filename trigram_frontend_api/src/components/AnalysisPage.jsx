@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import GraphModal from './GraphModal';
 import './AnalysisPage.css';
 
 export default function AnalysisPage() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedGraph, setSelectedGraph] = useState(null);
 
     useEffect(() => {
         fetch('/analysis/stats.json')
@@ -119,7 +121,12 @@ export default function AnalysisPage() {
                     <h2>Visualizations</h2>
                     <div className="graphs-grid">
                         {graphs.map((graph) => (
-                            <div key={graph.id} className="graph-card">
+                            <div
+                                key={graph.id}
+                                className="graph-card"
+                                onClick={() => setSelectedGraph(graph)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className="graph-image">
                                     <img
                                         src={graph.image}
@@ -140,6 +147,14 @@ export default function AnalysisPage() {
             <footer className="analysis-footer">
                 <p>DSA Lab Project • Model Analysis Dashboard</p>
             </footer>
+
+            {/* Graph Detail Modal */}
+            {selectedGraph && (
+                <GraphModal
+                    graph={selectedGraph}
+                    onClose={() => setSelectedGraph(null)}
+                />
+            )}
         </div>
     );
 }

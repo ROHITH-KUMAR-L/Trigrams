@@ -122,6 +122,30 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     border: 1px solid #e5e7eb;
     transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.graph-card::after {
+    content: '👁️ Click to view details';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(124, 58, 237, 0.95);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.graph-card:hover::after {
+    opacity: 1;
 }
 
 .graph-card:hover {
@@ -129,10 +153,15 @@
     box-shadow: 0 12px 35px rgba(124, 58, 237, 0.12);
 }
 
+.graph-card:hover .graph-image {
+    filter: brightness(0.7);
+}
+
 .graph-image {
     padding: 1rem;
     background: #fafbff;
     border-bottom: 1px solid #e5e7eb;
+    transition: filter 0.3s ease;
 }
 
 .graph-image img {
