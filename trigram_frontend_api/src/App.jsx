@@ -97,7 +97,7 @@ function App() {
                         {/* Controls Panel */}
                         <div key="controls" className="grid-card controls-card">
                             <div className="card-header">
-                                <h3>⚙️ Controls</h3>
+                                <h3>Controls</h3>
                             </div>
                             <div className="card-content">
                                 <div className="control-group">
@@ -107,13 +107,13 @@ function App() {
                                             className={`toggle-btn ${predictionMode === 'word' ? 'active' : ''}`}
                                             onClick={() => setPredictionMode('word')}
                                         >
-                                            📝 Word
+                                            Word
                                         </button>
                                         <button
                                             className={`toggle-btn ${predictionMode === 'sentence' ? 'active' : ''}`}
                                             onClick={() => setPredictionMode('sentence')}
                                         >
-                                            � Sentence
+                                            Sentence
                                         </button>
                                     </div>
                                 </div>
@@ -145,7 +145,7 @@ function App() {
                         {/* Stats Panel */}
                         <div key="stats" className="grid-card stats-card">
                             <div className="card-header">
-                                <h3>📊 Model Stats</h3>
+                                <h3>Model Stats</h3>
                             </div>
                             <div className="card-content">
                                 <Stats />
@@ -155,7 +155,7 @@ function App() {
                         {/* Visualization Panel */}
                         <div key="viz" className="grid-card viz-card">
                             <div className="card-header">
-                                <h3>🌳 Data Structures</h3>
+                                <h3>Data Structures</h3>
                             </div>
                             <div className="card-content viz-content">
                                 <DataStructureViz text={text} predictions={predictions} />

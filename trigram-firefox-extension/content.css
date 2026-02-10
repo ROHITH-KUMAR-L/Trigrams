@@ -1,32 +1,383 @@
 /**
  * Trigram Autofill - Content Script Styles
- * Styles for the prediction dropdown overlay
+ * Professional design system for the floating panel and prediction dropdown
  */
 
-/* Prediction dropdown container */
-.trigram-dropdown {
-    position: fixed;
-    z-index: 2147483647;
-    /* Maximum z-index */
-    min-width: 200px;
-    max-width: 350px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 12px;
-    box-shadow:
-        0 10px 40px rgba(0, 0, 0, 0.4),
-        0 0 20px rgba(99, 102, 241, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    overflow: hidden;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    animation: trigram-slideIn 0.15s ease-out;
+/* ─── CSS Variables ─── */
+:root {
+    --tri-bg: #0f0f14;
+    --tri-surface: #1a1b23;
+    --tri-surface-elevated: #22232e;
+    --tri-border: rgba(255, 255, 255, 0.06);
+    --tri-border-hover: rgba(255, 255, 255, 0.12);
+    --tri-text: #e4e4e7;
+    --tri-text-muted: #71717a;
+    --tri-text-dim: #52525b;
+    --tri-accent: #6366f1;
+    --tri-accent-soft: rgba(99, 102, 241, 0.12);
+    --tri-accent-glow: rgba(99, 102, 241, 0.25);
+    --tri-success: #22c55e;
+    --tri-danger: #ef4444;
+    --tri-radius: 14px;
+    --tri-radius-sm: 8px;
+    --tri-radius-xs: 6px;
+    --tri-font: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --tri-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes trigram-slideIn {
+/* ─── Floating Control Panel ─── */
+#trigram-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2147483647;
+    font-family: var(--tri-font);
+    font-size: 13px;
+    min-width: 220px;
+    max-width: 260px;
+    background: var(--tri-surface);
+    border: 1px solid var(--tri-border);
+    border-radius: var(--tri-radius);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    animation: tri-panelIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+@keyframes tri-panelIn {
     from {
         opacity: 0;
-        transform: translateY(-8px);
+        transform: translateY(12px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ─── Panel Header ─── */
+#trigram-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background var(--tri-transition);
+    user-select: none;
+}
+
+#trigram-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tri-logo {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.tri-brand {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--tri-text);
+    letter-spacing: -0.01em;
+    flex: 1;
+}
+
+.tri-status-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: all var(--tri-transition);
+}
+
+.tri-status-badge.on {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.15);
+}
+
+.tri-status-badge.off {
+    background: rgba(113, 113, 122, 0.15);
+    color: var(--tri-text-muted);
+}
+
+.tri-chevron {
+    color: var(--tri-text-dim);
+    font-size: 10px;
+    transition: transform var(--tri-transition);
+    margin-left: 2px;
+}
+
+.tri-chevron.open {
+    transform: rotate(180deg);
+}
+
+/* ─── Settings Panel ─── */
+#trigram-settings {
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--tri-border);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tri-section-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--tri-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+
+/* ─── Mode Toggle ─── */
+.tri-mode-group {
+    display: flex;
+    gap: 0;
+    background: var(--tri-bg);
+    border-radius: var(--tri-radius-sm);
+    padding: 3px;
+    border: 1px solid var(--tri-border);
+}
+
+.tri-mode-btn {
+    flex: 1;
+    padding: 7px 10px;
+    border: none;
+    border-radius: var(--tri-radius-xs);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--tri-font);
+    cursor: pointer;
+    transition: all var(--tri-transition);
+    background: transparent;
+    color: var(--tri-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: relative;
+}
+
+.tri-mode-btn:hover:not(.active) {
+    color: var(--tri-text);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tri-mode-btn.active {
+    background: var(--tri-accent);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--tri-accent-glow);
+}
+
+.tri-mode-btn .mode-icon {
+    font-size: 12px;
+}
+
+/* ─── Slider Control ─── */
+.tri-slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tri-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tri-slider-label {
+    font-size: 12px;
+    color: var(--tri-text-muted);
+    font-weight: 500;
+}
+
+.tri-slider-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tri-accent);
+    font-variant-numeric: tabular-nums;
+    background: var(--tri-accent-soft);
+    padding: 1px 7px;
+    border-radius: 4px;
+}
+
+.tri-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--tri-bg);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    border: 1px solid var(--tri-border);
+}
+
+.tri-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--tri-accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--tri-accent-glow);
+    transition: transform var(--tri-transition), box-shadow var(--tri-transition);
+}
+
+.tri-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px var(--tri-accent-glow);
+}
+
+.tri-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--tri-accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 6px var(--tri-accent-glow);
+}
+
+/* ─── Toggle Switch (Auto-predict) ─── */
+.tri-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tri-toggle-label {
+    font-size: 12px;
+    color: var(--tri-text-muted);
+    font-weight: 500;
+}
+
+.tri-toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.tri-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.tri-toggle-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--tri-bg);
+    border: 1px solid var(--tri-border);
+    border-radius: 12px;
+    transition: all var(--tri-transition);
+}
+
+.tri-toggle input:checked+.tri-toggle-track {
+    background: var(--tri-accent);
+    border-color: var(--tri-accent);
+    box-shadow: 0 0 8px var(--tri-accent-glow);
+}
+
+.tri-toggle-track::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 2px;
+    left: 2px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform var(--tri-transition);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.tri-toggle input:checked+.tri-toggle-track::after {
+    transform: translateX(16px);
+}
+
+/* ─── Power Button ─── */
+.tri-power-btn {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid var(--tri-border);
+    border-radius: var(--tri-radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--tri-font);
+    cursor: pointer;
+    transition: all var(--tri-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    letter-spacing: 0.02em;
+}
+
+.tri-power-btn.enabled {
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.15);
+}
+
+.tri-power-btn.enabled:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.tri-power-btn.disabled {
+    background: rgba(34, 197, 94, 0.08);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.15);
+}
+
+.tri-power-btn.disabled:hover {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.25);
+}
+
+/* ─── Separator ─── */
+.tri-separator {
+    height: 1px;
+    background: var(--tri-border);
+    margin: 2px 0;
+}
+
+/* ─── Prediction Dropdown ─── */
+#trigram-dropdown {
+    position: fixed;
+    z-index: 2147483646;
+    min-width: 220px;
+    max-width: 380px;
+    background: var(--tri-surface);
+    border: 1px solid var(--tri-border);
+    border-radius: 12px;
+    box-shadow:
+        0 16px 48px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    font-family: var(--tri-font);
+    overflow: hidden;
+    animation: tri-dropIn 0.15s ease-out;
+}
+
+@keyframes tri-dropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
     }
 
     to {
@@ -35,115 +386,84 @@
     }
 }
 
-/* Hidden state */
-.trigram-hidden {
-    display: none !important;
-}
-
-/* Individual prediction item */
-.trigram-item {
+/* ─── Prediction Item ─── */
+.tri-pred-item {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     padding: 10px 14px;
     cursor: pointer;
-    transition: all 0.15s ease;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.12s ease;
+    border-left: 3px solid transparent;
 }
 
-.trigram-item:last-child {
-    border-bottom: none;
+.tri-pred-item:hover {
+    background: rgba(99, 102, 241, 0.08);
 }
 
-.trigram-item:hover {
-    background: rgba(99, 102, 241, 0.15);
+.tri-pred-item.selected {
+    background: rgba(99, 102, 241, 0.12);
+    border-left-color: var(--tri-accent);
 }
 
-/* Selected item */
-.trigram-selected {
-    background: linear-gradient(90deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%);
-    border-left: 3px solid #6366f1;
+.tri-pred-word {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tri-text);
+    flex: 1;
 }
 
-.trigram-selected .trigram-word {
+.tri-pred-item.selected .tri-pred-word {
     color: #a5b4fc;
 }
 
-/* Word text */
-.trigram-word {
-    font-size: 14px;
-    font-weight: 500;
-    color: #e2e8f0;
-    flex: 1;
-    margin-right: 12px;
-}
-
-/* Probability badge */
-.trigram-prob {
-    font-size: 11px;
-    font-weight: 600;
-    color: #94a3b8;
-    background: rgba(100, 116, 139, 0.2);
-    padding: 3px 8px;
-    border-radius: 12px;
-    margin-right: 8px;
-}
-
-/* Tab hint */
-.trigram-hint {
+.tri-pred-prob {
     font-size: 10px;
-    font-weight: 700;
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.2);
-    padding: 2px 6px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Loading state */
-.trigram-loading {
-    padding: 14px 18px;
-    color: #94a3b8;
-    font-size: 13px;
-    text-align: center;
-}
-
-/* Error state */
-.trigram-error {
-    padding: 14px 18px;
-    color: #f87171;
-    font-size: 13px;
-    text-align: center;
-    background: rgba(248, 113, 113, 0.1);
-}
-
-/* Header (optional, for future use) */
-.trigram-header {
-    padding: 8px 14px;
-    background: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 11px;
     font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: var(--tri-text-dim);
+    background: var(--tri-bg);
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--tri-border);
 }
 
-/* Scrollbar styling */
-.trigram-dropdown::-webkit-scrollbar {
-    width: 6px;
+.tri-pred-item.selected .tri-pred-prob {
+    color: var(--tri-accent);
+    background: var(--tri-accent-soft);
+    border-color: rgba(99, 102, 241, 0.2);
 }
 
-.trigram-dropdown::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+/* ─── Prediction Footer ─── */
+.tri-pred-footer {
+    padding: 7px 12px;
+    background: var(--tri-bg);
+    border-top: 1px solid var(--tri-border);
+    font-size: 10px;
+    color: var(--tri-text-dim);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    letter-spacing: 0.01em;
 }
 
-.trigram-dropdown::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.3);
+.tri-pred-footer kbd {
+    font-family: var(--tri-font);
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--tri-surface);
+    padding: 1px 5px;
     border-radius: 3px;
+    border: 1px solid var(--tri-border);
+    margin-right: 3px;
 }
 
-.trigram-dropdown::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.5);
+/* ─── Legacy class support ─── */
+.trigram-dropdown {
+    display: none;
+}
+
+.trigram-hidden {
+    display: none !important;
 }

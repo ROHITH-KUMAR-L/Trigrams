@@ -4,17 +4,17 @@
  */
 
 // DOM Elements
-const statusBadge = document.getElementById('statusBadge');
+const statusChip = document.getElementById('statusChip');
 const enableToggle = document.getElementById('enableToggle');
 const tempSlider = document.getElementById('tempSlider');
-const tempValue = document.getElementById('tempValue');
+const tempDisplay = document.getElementById('tempDisplay');
 const apiUrl = document.getElementById('apiUrl');
 const totalTrigrams = document.getElementById('totalTrigrams');
 const uniqueWords = document.getElementById('uniqueWords');
-const errorMessage = document.getElementById('errorMessage');
+const errorBanner = document.getElementById('errorBanner');
 const refreshBtn = document.getElementById('refreshBtn');
 const saveBtn = document.getElementById('saveBtn');
-const statsSection = document.getElementById('statsSection');
+const statsCard = document.getElementById('statsCard');
 
 /**
  * Initialize popup
@@ -35,7 +35,7 @@ async function loadConfig() {
       const config = response.config;
       enableToggle.checked = config.enabled;
       tempSlider.value = config.temperature;
-      tempValue.textContent = config.temperature.toFixed(1);
+      tempDisplay.textContent = config.temperature.toFixed(1);
       apiUrl.value = config.apiUrl;
     }
   } catch (error) {
@@ -48,7 +48,6 @@ async function loadConfig() {
  */
 async function checkApiStatus() {
   try {
-    // Check health
     const healthResponse = await browser.runtime.sendMessage({ action: 'health' });
     
     if (healthResponse.success && healthResponse.modelLoaded) {
@@ -60,43 +59,40 @@ async function checkApiStatus() {
       if (statsResponse.success) {
         totalTrigrams.textContent = formatNumber(statsResponse.stats.total_trigrams);
         uniqueWords.textContent = formatNumber(statsResponse.stats.unique_first_words);
-        statsSection.classList.remove('hidden');
+        statsCard.classList.remove('hidden');
       }
     } else {
-      setStatus('error', 'Model not loaded');
+      setStatus('error', 'Not loaded');
       showError('Model not loaded. Please start the trigram server.');
     }
   } catch (error) {
-    setStatus('error', 'Disconnected');
+    setStatus('error', 'Offline');
     showError('Cannot connect to API. Is the server running?');
-    statsSection.classList.add('hidden');
+    statsCard.classList.add('hidden');
   }
 }
 
 /**
- * Set status badge state
+ * Set status chip state
  */
 function setStatus(state, text) {
-  const dot = statusBadge.querySelector('.status-dot');
-  const textEl = statusBadge.querySelector('.status-text');
-  
-  dot.className = 'status-dot ' + state;
-  textEl.textContent = text;
+  statusChip.className = 'status-chip ' + state;
+  statusChip.querySelector('.status-label').textContent = text;
 }
 
 /**
- * Show error message
+ * Show error banner
  */
 function showError(message) {
-  errorMessage.querySelector('.error-text').textContent = message;
-  errorMessage.classList.remove('hidden');
+  errorBanner.querySelector('.error-text').textContent = message;
+  errorBanner.classList.remove('hidden');
 }
 
 /**
- * Hide error message
+ * Hide error banner
  */
 function hideError() {
-  errorMessage.classList.add('hidden');
+  errorBanner.classList.add('hidden');
 }
 
 /**
@@ -128,11 +124,11 @@ async function saveSettings() {
     });
     
     // Visual feedback
-    saveBtn.textContent = '✓ Saved!';
+    saveBtn.textContent = '✓ Saved';
     saveBtn.classList.add('success');
     
     setTimeout(() => {
-      saveBtn.textContent = '💾 Save Settings';
+      saveBtn.textContent = 'Save Settings';
       saveBtn.classList.remove('success');
     }, 1500);
     
@@ -140,9 +136,9 @@ async function saveSettings() {
     await checkApiStatus();
   } catch (error) {
     console.error('Failed to save config:', error);
-    saveBtn.textContent = '❌ Error';
+    saveBtn.textContent = '✕ Error';
     setTimeout(() => {
-      saveBtn.textContent = '💾 Save Settings';
+      saveBtn.textContent = 'Save Settings';
     }, 1500);
   }
 }
@@ -153,7 +149,7 @@ async function saveSettings() {
 function setupEventListeners() {
   // Temperature slider
   tempSlider.addEventListener('input', () => {
-    tempValue.textContent = parseFloat(tempSlider.value).toFixed(1);
+    tempDisplay.textContent = parseFloat(tempSlider.value).toFixed(1);
   });
 
   // Enable toggle - instant save
